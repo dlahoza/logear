@@ -46,7 +46,8 @@ func (v *JsonFile) worker(t *tail.Tail) {
 			j["file"] = filepath.Base(t.Filename)
 			j["@timestamp"] = j[v.timestamp]
 			v.messageQueue <- &Message{Time: time.Now(), Data: j}
-			ioutil.WriteFile(t.Filename+".pos", strconv.Itoa(t.Tell), 0644)
+			pos, _ := t.Tell()
+			ioutil.WriteFile(t.Filename+".pos", []byte(strconv.Itoa(int(pos))), 0644)
 		}
 		log.Println(data.Text)
 	}
