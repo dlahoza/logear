@@ -8,67 +8,50 @@ import (
 	"os"
 )
 
-type Config struct {
-	Elasticsearch    ConfigElasticsearch
-	FluentdForwarder ConfigFluentdForwarder
-	Jsonfile         ConfigJsonfile
-}
+var cfg map[string]interface{}
 
-type ConfigElasticsearch struct {
-	Host  string
-	Index string
-}
-
-type ConfigFluentdForwarder struct {
-	Host string
-}
-
-type ConfigJsonfile struct {
-	Path      []string
-	Timestamp string
-}
-
-var cfg Config
-
-func ParseTomlFile(filename string) error {
+func parseTomlFile(filename string) {
 	if data, err := ioutil.ReadFile(filename); err != nil {
-		log.Print("Can't read config file ", filename, ", error: ", err)
-		return err
+		log.Fatal("Can't read config file ", filename, ", error: ", err)
 	} else {
 		if _, err := toml.Decode(string(data), &cfg); err != nil {
-			log.Print("Can't parse config file ", filename, ", error: ", err)
-			return err
+			log.Fatal("Can't parse config file ", filename, ", error: ", err)
 		}
 	}
-	log.Print("Readed config file: ", filename)
-	return nil
 }
 
-func ReadEnv(name string, val *string) {
-	if s := os.Getenv(name); s != "" {
-		*val = s
+func initLogger(filename string) {
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal("Failed to open log file ", filename, ", error: ", err)
 	}
+	log.SetOutput(file)
 }
 
 func readConfig() {
 	var (
 		configFile string
+		logFile    string
 		showHelp   bool
 	)
-	/*config.SetEnvPrefix("TINYLOG_")
-	config.SetConfigName("tinylog")
-	config.AddConfigPath("/etc/tinylog/")
-	config.AddConfigPath("/usr/local/etc/tinylog/")
-	config.AddConfigPath("./")*/
 
-	flag.StringVar(&configFile, []string{"c", "-config"}, "/etc/tinylog/tinylog.toml", "config file")
-	flag.BoolVar(&showHelp, []string{"h", "#help", "-help"}, false, "display the help")
+	flag.StringVar(&configFile, []string{"c", "-config"}, "/etc/logcrank/logcrank.toml", "config file")
+	flag.StringVar(&logFile, []string{"l", "-log"}, "", "log file")
+	flag.BoolVar(&showHelp, []string{"h", "-help"}, false, "display the help")
 	flag.Parse()
 	if showHelp {
 		flag.PrintDefaults()
 		os.Exit(0)
 	}
-	ParseTomlFile(configFile)
-	ReadEnv("ELASTICSEARCH_HOST", &cfg.Elasticsearch.Host)
-
+	parseTomlFile(configFile)
+	if logFile != "" {
+		initLogger(logFile)
+	} else {
+		if v, ok := cfg["main"]; ok {
+			if v, ok := v.(map[string]interface{})["logfile"]; ok {
+				initLogger(v.(string))
+			}
+		}
+	}
+	log.Printf("%s %s started", progname, version)
 }

@@ -1,13 +1,8 @@
 package main
 
 import (
-	"fmt"
+	basiclogger "./basiclogger"
 	"time"
-)
-
-const (
-	progname = "TinyLog"
-	version  = "0.0.1"
 )
 
 func init() {
@@ -15,11 +10,20 @@ func init() {
 }
 
 func main() {
-	fmt.Printf("%v", cfg.FluentdForwarder.Host)
-	Outputs["elastic"] = FluentdforwarderOutputInit(cfg.FluentdForwarder)
-	StartMessageQueue(1)
-	//MessageQueue <- &Message{Time: time.Now(), Data: map[string]interface{}{"message": "111"}}
-	JsonFileInit(MessageQueue, cfg.Jsonfile)
+	basiclogger.InitMessageQueue(1)
+	if outputs, ok := cfg["output"]; ok {
+		outputs := outputs.([]map[string]interface{})
+		for _, output := range outputs {
+			basiclogger.AddOutput(InitOutput(output))
+		}
+	}
+	if inputs, ok := cfg["input"]; ok {
+		inputs := inputs.([]map[string]interface{})
+		for _, input := range inputs {
+			basiclogger.AddInput(InitInput(input))
+		}
+	}
+	basiclogger.StartMessageQueue()
 	for {
 		time.Sleep(time.Second)
 	}
