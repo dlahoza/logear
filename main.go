@@ -2,7 +2,6 @@ package main
 
 import (
 	basiclogger "./basiclogger"
-	"time"
 )
 
 func init() {
@@ -23,8 +22,6 @@ func main() {
 			basiclogger.AddInput(InitInput(input))
 		}
 	}
-	basiclogger.StartMessageQueue()
-	for {
-		time.Sleep(time.Second)
-	}
+	q := basiclogger.StartMessageQueue()
+	<-q
 }

@@ -31,7 +31,7 @@ func InitMessageQueue(length int) {
 
 }
 
-func StartMessageQueue() {
+func StartMessageQueue() chan bool {
 	if len(Inputs) == 0 {
 		log.Fatal("[messageQueue] Can't start without inputs. Please specify at least one.")
 	}
@@ -41,7 +41,9 @@ func StartMessageQueue() {
 	for _, i := range Inputs {
 		go i.Listener()
 	}
-	go messageQueueWorker()
+	q := make(chan bool)
+	go messageQueueWorker(q)
+	return q
 }
 
 func AddOutput(o Output) {
@@ -58,7 +60,10 @@ func AddInput(i Input) {
 	}
 }
 
-func messageQueueWorker() {
+func messageQueueWorker(q chan bool) {
+	defer func() {
+		q <- true
+	}()
 	var message *Message
 	log.Print("[messageQueue] Queue worker started")
 	for {
