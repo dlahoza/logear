@@ -1,5 +1,7 @@
 # logear
 
+[![Build status](https://api.travis-ci.org/DLag/logear.png)](https://travis-ci.org/DLag/logear)
+
 (log ear, log gear)
 
 Logging system designed to be fast, reliable and flexible but in same time simple.
