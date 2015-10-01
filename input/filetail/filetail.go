@@ -43,15 +43,6 @@ func (v *FileTail) Listener() {
 	go v.watcher()
 }
 
-func ctimeFile(filename string) int64 {
-	var st syscall.Stat_t
-	if err := syscall.Stat(filename, &st); err != nil {
-		log.Printf("[%s] Can't stat file %s, error: ", module, filename, err)
-		return -1
-	}
-	return st.Ctim.Sec
-}
-
 func (v *FileTail) watcher() {
 	log.Printf("[%s] File watcher started", v.tag)
 	for {
