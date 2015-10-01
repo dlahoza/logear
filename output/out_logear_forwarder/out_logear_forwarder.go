@@ -1,8 +1,11 @@
-package fluentd_forwarder
+package out_logear_forwarder
 
 import (
+	"bytes"
+	"compress/zlib"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/binary"
 	"encoding/pem"
 	"fmt"
 	"github.com/DLag/logear/basiclogger"
@@ -16,9 +19,9 @@ import (
 	"time"
 )
 
-const module = "fluentd_forwarder"
+const module = "out_logear_forwarder"
 
-type Fluentd_forwarder struct {
+type Out_logear_forwarder struct {
 	tag                           string
 	c                             chan *basiclogger.Message
 	conn                          net.Conn
@@ -38,7 +41,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func Init(conf map[string]interface{}) *Fluentd_forwarder {
+func Init(conf map[string]interface{}) *Out_logear_forwarder {
 	if hosts_raw, ok := conf["hosts"]; !ok || len(hosts_raw.([]interface{})) == 0 {
 		log.Fatal("[", module, "] You must specify hosts")
 	} else {
@@ -69,7 +72,7 @@ func Init(conf map[string]interface{}) *Fluentd_forwarder {
 					SSLCA = ca.(string)
 				}
 				tag, _ := conf["tag"].(string)
-				res := Fluentd_forwarder{
+				res := Out_logear_forwarder{
 					tag:            tag,
 					c:              make(chan *basiclogger.Message),
 					conn:           nil,
@@ -86,13 +89,12 @@ func Init(conf map[string]interface{}) *Fluentd_forwarder {
 	return nil
 }
 
-func (v *Fluentd_forwarder) Tag() string {
+func (v *Out_logear_forwarder) Tag() string {
 	return v.tag
 }
 
-func (v *Fluentd_forwarder) Send(message *basiclogger.Message) error {
+func (v *Out_logear_forwarder) Send(message *basiclogger.Message) error {
 	var err error
-	now := time.Now().UnixNano()
 	for {
 		if v.conn == nil {
 			if v.connect() != nil {
@@ -101,15 +103,28 @@ func (v *Fluentd_forwarder) Send(message *basiclogger.Message) error {
 			}
 		}
 		message.Data["host"] = hostname
-		val := []interface{}{v.tag, now, message.Data}
-		m, err := msgpack.Marshal(val)
+		//val := []interface{}{v.tag, now, message.Data}
+		m, err := msgpack.Marshal(message.Data)
 		if err != nil {
 			fmt.Printf("[%s] Bogus message: %v", v.tag, message.Data)
 			break
 		}
 		v.conn.SetDeadline(time.Now().Add(v.timeout))
-		_, err = v.conn.Write(m)
-		if err != nil {
+		size := int64(len((m)))
+		var buffer bytes.Buffer
+		buffer.Truncate(0)
+		compressor, _ := zlib.NewWriterLevel(&buffer, 6)
+		compressor.Write(m)
+		compressor.Flush()
+		compressor.Close()
+		cm := buffer.Bytes()
+		csize := int64(len((cm)))
+		log.Printf("[%s] Trying to write %d compressed data of (%d uncompressed)", v.tag, csize, size)
+		binary.Write(v.conn, binary.BigEndian, csize)
+		binary.Write(v.conn, binary.BigEndian, size)
+		n, err := v.conn.Write(cm)
+
+		if err != nil || int64(n) != csize {
 			log.Printf("[%s] Socket write error %v", v.tag, err)
 			v.conn.Close()
 			v.conn = nil
@@ -121,7 +136,7 @@ func (v *Fluentd_forwarder) Send(message *basiclogger.Message) error {
 	return err
 }
 
-func (v *Fluentd_forwarder) connect() error {
+func (v *Out_logear_forwarder) connect() error {
 	hostport := v.hosts[rand.Int()%len(v.hosts)]
 	submatch := hostport_re.FindSubmatch([]byte(hostport))
 	host := string(submatch[1])
@@ -171,9 +186,9 @@ func (v *Fluentd_forwarder) connect() error {
 	return nil
 }
 
-func (v *Fluentd_forwarder) loadCerts() {
+func (v *Out_logear_forwarder) loadCerts() {
 	v.tlsEnabled = false
-	v.tlsConfig.MinVersion = tls.VersionTLS10
+	v.tlsConfig.MinVersion = tls.VersionTLS12
 	if len(v.SSLCertificate) > 0 && len(v.SSLKey) > 0 {
 		log.Printf("[%s] Loading client ssl certificate and key from \"%s\" and \"%s\"\n", v.tag,
 			v.SSLCertificate, v.SSLKey)

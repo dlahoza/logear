@@ -3,7 +3,9 @@ package main
 import (
 	"github.com/DLag/logear/basiclogger"
 	"github.com/DLag/logear/input/filetail"
+	"github.com/DLag/logear/input/in_logear_forwarder"
 	"github.com/DLag/logear/output/fluentd_forwarder"
+	"github.com/DLag/logear/output/out_logear_forwarder"
 	"log"
 )
 
@@ -13,6 +15,8 @@ func InitInput(input map[string]interface{}) basiclogger.Input {
 		switch t {
 		case "filetail":
 			return filetail.Init(basiclogger.MessageQueue, input)
+		case "in_logear_forwarder":
+			return in_logear_forwarder.Init(basiclogger.MessageQueue, input)
 		default:
 			log.Fatalf("\"%s\" isn't right input type", t)
 		}
@@ -28,6 +32,8 @@ func InitOutput(output map[string]interface{}) basiclogger.Output {
 		switch t {
 		case "fluentd_forwarder":
 			return fluentd_forwarder.Init(output)
+		case "out_logear_forwarder":
+			return out_logear_forwarder.Init(output)
 		default:
 			log.Fatalf("\"%s\" isn't right output type", t)
 		}

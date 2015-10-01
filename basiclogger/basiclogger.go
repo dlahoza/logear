@@ -56,7 +56,7 @@ func AddOutput(o Output) {
 func AddInput(i Input) {
 	if i != nil {
 		Inputs = append(Inputs, i)
-		log.Printf("[messageQueue] \"%s\" input added to message queue", i.Tag())
+		log.Printf("[messageQueue] \"%s\" Input added to message queue", i.Tag())
 	}
 }
 

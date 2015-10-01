@@ -2,5 +2,5 @@ package main
 
 const (
 	progname = "Logear"
-	version  = "0.1"
+	version  = "0.2"
 )
