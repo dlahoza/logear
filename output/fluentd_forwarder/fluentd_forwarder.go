@@ -86,19 +86,16 @@ func Init(conf map[string]interface{}) *Fluentd_forwarder {
 	return nil
 }
 
-func (v Fluentd_forwarder) Tag() string {
+func (v *Fluentd_forwarder) Tag() string {
 	return v.tag
 }
 
-func (v Fluentd_forwarder) Send(message *basiclogger.Message) error {
+func (v *Fluentd_forwarder) Send(message *basiclogger.Message) error {
 	var err error
 	now := time.Now().UnixNano()
 	for {
 		if v.conn == nil {
-			if !v.connect() {
-				if v.conn != nil {
-					v.conn.Close()
-				}
+			if v.connect() != nil {
 				time.Sleep(time.Second)
 				continue
 			}
@@ -110,7 +107,7 @@ func (v Fluentd_forwarder) Send(message *basiclogger.Message) error {
 			fmt.Printf("[%s] Bogus message: %v", v.tag, message.Data)
 			break
 		}
-		v.conn.SetDeadline(time.Now().Add(v.timeout))
+		//v.conn.SetDeadline(time.Now().Add(v.timeout))
 		_, err = v.conn.Write(m)
 		if err != nil {
 			log.Printf("[%s] Socket write error %v", v.tag, err)
@@ -123,7 +120,7 @@ func (v Fluentd_forwarder) Send(message *basiclogger.Message) error {
 	return err
 }
 
-func (v Fluentd_forwarder) connect() bool {
+func (v *Fluentd_forwarder) connect() error {
 	hostport := v.hosts[rand.Int()%len(v.hosts)]
 	submatch := hostport_re.FindSubmatch([]byte(hostport))
 	host := string(submatch[1])
@@ -132,7 +129,7 @@ func (v Fluentd_forwarder) connect() bool {
 
 	if err != nil {
 		log.Printf("[%s] DNS lookup failure \"%s\": %s", v.tag, host, err)
-		return false
+		return err
 	}
 
 	ip := ips[rand.Int()%len(ips)]
@@ -150,27 +147,26 @@ func (v Fluentd_forwarder) connect() bool {
 	conn, err := net.DialTimeout("tcp", addressport, v.timeout)
 	if err != nil {
 		log.Printf("[%s] Failure connecting to %s: %s\n", v.tag, address, err)
-		return false
+		return err
 	} else {
-		v.conn = conn
 		v.host = host
+		v.conn = conn
 	}
 	if v.tlsEnabled {
 		v.tlsConfig.ServerName = host
-
-		connTLS := tls.Client(v.conn, &v.tlsConfig)
+		connTLS := tls.Client(conn, &v.tlsConfig)
 		connTLS.SetDeadline(time.Now().Add(v.timeout))
 		err = connTLS.Handshake()
 		if err != nil {
 			log.Printf("[%s] Failed to tls handshake with %s %s\n", v.tag, address, err)
 			connTLS.Close()
-			return false
+			return err
 		} else {
 			v.conn = connTLS
 		}
 	}
 	log.Printf("[%s] Connected to %s\n", v.tag, address)
-	return true
+	return nil
 }
 
 func (v Fluentd_forwarder) loadCerts() {
