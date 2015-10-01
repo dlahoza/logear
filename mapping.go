@@ -1,9 +1,9 @@
 package main
 
 import (
-	basiclogger "./basiclogger"
-	filetail "./input/filetail"
-	fluentd_forwarder "./output/fluentd_forwarder"
+	"github.com/DLag/logear/basiclogger"
+	"github.com/DLag/logear/input/filetail"
+	"github.com/DLag/logear/output/fluentd_forwarder"
 	"log"
 )
 

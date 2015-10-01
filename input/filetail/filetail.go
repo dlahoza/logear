@@ -1,8 +1,8 @@
 package filetail
 
 import (
-	basiclogger "../../basiclogger"
 	"encoding/json"
+	"github.com/DLag/logear/basiclogger"
 	"github.com/hpcloud/tail"
 	"io/ioutil"
 	"log"

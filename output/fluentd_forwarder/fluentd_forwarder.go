@@ -1,11 +1,11 @@
 package fluentd_forwarder
 
 import (
-	basiclogger "../../basiclogger"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"github.com/DLag/logear/basiclogger"
 	"gopkg.in/vmihailenco/msgpack.v2"
 	"io/ioutil"
 	"log"
@@ -90,7 +90,6 @@ func (v Fluentd_forwarder) Tag() string {
 	return v.tag
 }
 
-//TODO: SSL support
 func (v Fluentd_forwarder) Send(message *basiclogger.Message) error {
 	var err error
 	now := time.Now().UnixNano()

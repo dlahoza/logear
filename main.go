@@ -1,7 +1,7 @@
 package main
 
 import (
-	basiclogger "./basiclogger"
+	"github.com/DLag/logear/basiclogger"
 )
 
 func init() {
