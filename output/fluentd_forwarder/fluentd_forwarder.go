@@ -182,6 +182,7 @@ func (v *Fluentd_forwarder) loadCerts() {
 			log.Fatalf("[%s] Failed loading client ssl certificate: %s\n", v.tag, err)
 		}
 		v.tlsConfig.Certificates = []tls.Certificate{cert}
+		v.tlsEnabled = true
 	}
 
 	if len(v.SSLCA) > 0 {
@@ -206,6 +207,6 @@ func (v *Fluentd_forwarder) loadCerts() {
 			log.Fatalf("[%s] Failed to parse CA certificate: %s\n", v.tag, v.SSLCA)
 		}
 		v.tlsConfig.RootCAs.AddCert(cert)
+		v.tlsEnabled = true
 	}
-	v.tlsEnabled = true
 }
