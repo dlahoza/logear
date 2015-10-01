@@ -3,8 +3,11 @@ package fluentd_forwarder
 import (
 	basiclogger "../../basiclogger"
 	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"gopkg.in/vmihailenco/msgpack.v2"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
@@ -16,14 +19,15 @@ import (
 const module = "fluentd_forwarder"
 
 type Fluentd_forwarder struct {
-	tag        string
-	c          chan *basiclogger.Message
-	conn       net.Conn
-	connTLS    tls.Conn
-	tlsEnabled bool
-	host       string
-	hosts      []string
-	timeout    time.Duration
+	tag                           string
+	c                             chan *basiclogger.Message
+	conn                          net.Conn
+	SSLCertificate, SSLKey, SSLCA string
+	tlsConfig                     tls.Config
+	tlsEnabled                    bool
+	host                          string
+	hosts                         []string
+	timeout                       time.Duration
 }
 
 var hostname string
@@ -54,13 +58,28 @@ func Init(conf map[string]interface{}) *Fluentd_forwarder {
 			if timeout, ok := conf["timeout"]; !ok || timeout.(int64) <= 0 {
 				log.Fatal("[", module, "] You must specify right timeout")
 			} else {
-				tag, _ := conf["tag"]
-				return &Fluentd_forwarder{
-					tag:     tag.(string),
-					c:       make(chan *basiclogger.Message),
-					conn:    nil,
-					hosts:   hosts,
-					timeout: time.Second * time.Duration(timeout.(int64))}
+				var SSLCertificate, SSLKey, SSLCA string
+				if cert, ok := conf["ssl_cert"]; ok && len(cert.(string)) > 0 {
+					SSLCertificate = cert.(string)
+					if key, ok := conf["ssl_key"]; ok && len(key.(string)) > 0 {
+						SSLKey = key.(string)
+					}
+				}
+				if ca, ok := conf["ssl_ca"]; ok && len(ca.(string)) > 0 {
+					SSLCA = ca.(string)
+				}
+				tag, _ := conf["tag"].(string)
+				res := Fluentd_forwarder{
+					tag:            tag,
+					c:              make(chan *basiclogger.Message),
+					conn:           nil,
+					hosts:          hosts,
+					SSLCertificate: SSLCertificate,
+					SSLKey:         SSLKey,
+					SSLCA:          SSLCA,
+					timeout:        time.Second * time.Duration(timeout.(int64))}
+				res.loadCerts()
+				return &res
 			}
 		}
 	}
@@ -135,6 +154,61 @@ func (v Fluentd_forwarder) connect() bool {
 		return false
 	} else {
 		v.conn = conn
+		v.host = host
 	}
-	return false
+	if v.tlsEnabled {
+		v.tlsConfig.ServerName = host
+
+		connTLS := tls.Client(v.conn, &v.tlsConfig)
+		connTLS.SetDeadline(time.Now().Add(v.timeout))
+		err = connTLS.Handshake()
+		if err != nil {
+			log.Printf("[%s] Failed to tls handshake with %s %s\n", v.tag, address, err)
+			connTLS.Close()
+			return false
+		} else {
+			v.conn = connTLS
+		}
+	}
+	log.Printf("[%s] Connected to %s\n", v.tag, address)
+	return true
+}
+
+func (v Fluentd_forwarder) loadCerts() {
+	v.tlsEnabled = false
+	v.tlsConfig.MinVersion = tls.VersionTLS10
+	if len(v.SSLCertificate) > 0 && len(v.SSLKey) > 0 {
+		log.Printf("[%s] Loading client ssl certificate and key from \"%s\" and \"%s\"\n", v.tag,
+			v.SSLCertificate, v.SSLKey)
+		cert, err := tls.LoadX509KeyPair(v.SSLCertificate, v.SSLKey)
+		if err != nil {
+			log.Fatalf("[%s] Failed loading client ssl certificate: %s\n", v.tag, err)
+		}
+		v.tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
+	if len(v.SSLCA) > 0 {
+		log.Printf("[%s] Loading CA certificate from file: %s\n", v.tag, v.SSLCA)
+		v.tlsConfig.RootCAs = x509.NewCertPool()
+
+		pemdata, err := ioutil.ReadFile(v.SSLCA)
+		if err != nil {
+			log.Fatalf("[%s] Failure reading CA certificate: %s\n", v.tag, err)
+		}
+
+		block, _ := pem.Decode(pemdata)
+		if block == nil {
+			log.Fatalf("[%s] Failed to decode PEM data of CA certificate from \"%s\"\n", v.tag, v.SSLCA)
+		}
+		if block.Type != "CERTIFICATE" {
+			log.Fatalf("[%s] This is not a certificate file: %s\n", v.tag, v.SSLCA)
+		}
+
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			log.Fatalf("[%s] Failed to parse CA certificate: %s\n", v.tag, v.SSLCA)
+		}
+		v.tlsConfig.RootCAs.AddCert(cert)
+	}
+	v.tlsEnabled = true
 }
