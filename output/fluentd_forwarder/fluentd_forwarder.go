@@ -112,6 +112,7 @@ func (v *Fluentd_forwarder) Send(message *basiclogger.Message) error {
 		if err != nil {
 			log.Printf("[%s] Socket write error %v", v.tag, err)
 			v.conn.Close()
+			v.conn = nil
 			time.Sleep(time.Second)
 			continue
 		}
@@ -162,6 +163,7 @@ func (v *Fluentd_forwarder) connect() error {
 			connTLS.Close()
 			return err
 		} else {
+			log.Printf("[%s] Successful TLS handshake %s\n", v.tag, address)
 			v.conn = connTLS
 		}
 	}
@@ -169,7 +171,7 @@ func (v *Fluentd_forwarder) connect() error {
 	return nil
 }
 
-func (v Fluentd_forwarder) loadCerts() {
+func (v *Fluentd_forwarder) loadCerts() {
 	v.tlsEnabled = false
 	v.tlsConfig.MinVersion = tls.VersionTLS10
 	if len(v.SSLCertificate) > 0 && len(v.SSLKey) > 0 {
