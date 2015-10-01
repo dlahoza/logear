@@ -35,7 +35,7 @@ func readConfig() {
 		showHelp   bool
 	)
 
-	flag.StringVar(&configFile, []string{"c", "-config"}, "/etc/logcrank/logcrank.toml", "config file")
+	flag.StringVar(&configFile, []string{"c", "-config"}, "/etc/logear/logear.conf", "config file")
 	flag.StringVar(&logFile, []string{"l", "-log"}, "", "log file")
 	flag.BoolVar(&showHelp, []string{"h", "-help"}, false, "display the help")
 	flag.Parse()
