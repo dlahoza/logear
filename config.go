@@ -3,12 +3,22 @@ package main
 import (
 	"github.com/BurntSushi/toml"
 	flag "github.com/docker/docker/pkg/mflag"
+	"github.com/hashicorp/logutils"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
 )
 
-var cfg map[string]interface{}
+var (
+	cfg       map[string]interface{}
+	logFilter *logutils.LevelFilter
+	logLevels = []logutils.LogLevel{"DEBUG", "WARN", "ERROR"}
+)
+
+const (
+	logMinLevel = logutils.LogLevel("DEBUG")
+)
 
 func parseTomlFile(filename string) {
 	if data, err := ioutil.ReadFile(filename); err != nil {
@@ -20,12 +30,12 @@ func parseTomlFile(filename string) {
 	}
 }
 
-func initLogger(filename string) {
+func openFileLog(filename string) io.Writer {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal("Failed to open log file ", filename, ", error: ", err)
 	}
-	log.SetOutput(file)
+	return file
 }
 
 func readConfig() {
@@ -34,7 +44,12 @@ func readConfig() {
 		logFile    string
 		showHelp   bool
 	)
-
+	logFilter = &logutils.LevelFilter{
+		Levels:   logLevels,
+		MinLevel: logMinLevel,
+		Writer:   os.Stderr,
+	}
+	log.SetOutput(logFilter)
 	flag.StringVar(&configFile, []string{"c", "-config"}, "/etc/logear/logear.conf", "config file")
 	flag.StringVar(&logFile, []string{"l", "-log"}, "", "log file")
 	flag.BoolVar(&showHelp, []string{"h", "-help"}, false, "display the help")
@@ -45,11 +60,14 @@ func readConfig() {
 	}
 	parseTomlFile(configFile)
 	if logFile != "" {
-		initLogger(logFile)
+		logFilter.Writer = openFileLog(logFile)
 	} else {
 		if v, ok := cfg["main"]; ok {
 			if v, ok := v.(map[string]interface{})["logfile"]; ok {
-				initLogger(v.(string))
+				logFilter.Writer = openFileLog(v.(string))
+			}
+			if v, ok := v.(map[string]interface{})["loglevel"]; ok {
+				logFilter.MinLevel = logutils.LogLevel(v.(string))
 			}
 		}
 	}
