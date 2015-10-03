@@ -108,14 +108,14 @@ func (v *In_logear_forwarder) Listener() {
 func (v *In_logear_forwarder) listen() {
 	listener, err := tls.Listen("tcp4", v.bind, &v.tlsConfig)
 	if err != nil {
-		log.Fatalf("[%s] Can't start listen \"%s\", error: %v", v.tag, v.bind, err)
+		log.Fatalf("[ERROR] [%s] Can't start listen \"%s\", error: %v", v.tag, v.bind, err)
 	}
 	defer listener.Close()
-	log.Printf("[%s] Waiting for connections", v.tag)
+	log.Printf("[DEBUG] [%s] Waiting for connections", v.tag)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Printf("[%s] Can't accept client %v", v.tag, err)
+			log.Printf("[WARN] [%s] Can't accept client %v", v.tag, err)
 		}
 		go v.worker(conn)
 	}
@@ -123,47 +123,47 @@ func (v *In_logear_forwarder) listen() {
 
 func (v *In_logear_forwarder) worker(conn net.Conn) {
 
-	log.Printf("[%s] Accepted connection from %s", v.tag, conn.RemoteAddr().String())
+	log.Printf("[DEBUG] [%s] Accepted connection from %s", v.tag, conn.RemoteAddr().String())
 	for {
 		conn.SetReadDeadline(time.Now().Add(v.timeout))
 		csize, err := v.readInt64(conn)
 		if err != nil {
-			log.Printf("[%s] Can't read size of compressed payload, closing connection, error: %v", v.tag, err)
+			log.Printf("[WARN] [%s] Can't read size of compressed payload, closing connection, error: %v", v.tag, err)
 			conn.Close()
 			return
 		}
 		size, err := v.readInt64(conn)
 		if err != nil {
-			log.Printf("[%s] Can't read size of uncompressed payload, closing connection, error: %v", v.tag, err)
+			log.Printf("[WARN] [%s] Can't read size of uncompressed payload, closing connection, error: %v", v.tag, err)
 			conn.Close()
 			return
 		}
-		log.Printf("[%s] Waiting for %d bytes of payload", v.tag, csize)
+		log.Printf("[DEBUG] [%s] Waiting for %d bytes of payload", v.tag, csize)
 		cpayload := make([]byte, int(csize))
 		n, err := conn.Read(cpayload)
 		if err != nil || int64(n) != csize {
-			log.Printf("[%s] Can't read compressed payload, closing connection, error: %v", v.tag, err)
+			log.Printf("[WARN] [%s] Can't read compressed payload, closing connection, error: %v", v.tag, err)
 			conn.Close()
 			return
 		}
 		bpayload := bytes.NewReader(cpayload)
 		zpayload, err := zlib.NewReader(bpayload)
 		if err != nil {
-			log.Printf("[%s] Can't start zlib handler, closing connection, error: %v", v.tag, err)
+			log.Printf("[WARN] [%s] Can't start zlib handler, closing connection, error: %v", v.tag, err)
 			conn.Close()
 			return
 		}
 		payload := make([]byte, size)
 		n, err = zpayload.Read(payload)
 		if err != nil || int64(n) != size {
-			log.Printf("[%s] Can't uncompress payload, closing connection, error: %v", v.tag, err)
+			log.Printf("[WARN] [%s] Can't uncompress payload, closing connection, error: %v", v.tag, err)
 			conn.Close()
 			return
 		}
 		var data map[string]interface{}
 		err = msgpack.Unmarshal(payload, &data)
 		if err != nil {
-			log.Printf("[%s] Can't parse payload error: %v", v.tag, err)
+			log.Printf("[WARN] [%s] Can't parse payload error: %v", v.tag, err)
 			conn.Close()
 			return
 		}

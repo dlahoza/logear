@@ -18,10 +18,10 @@ func InitInput(input map[string]interface{}) basiclogger.Input {
 		case "in_logear_forwarder":
 			return in_logear_forwarder.Init(basiclogger.MessageQueue, input)
 		default:
-			log.Fatalf("\"%s\" isn't right input type", t)
+			log.Fatalf("[ERROR] \"%s\" isn't right input type", t)
 		}
 	} else {
-		log.Fatal("You must specify type of input")
+		log.Fatal("[ERROR] You must specify type of input")
 	}
 	return nil
 }
@@ -35,10 +35,10 @@ func InitOutput(output map[string]interface{}) basiclogger.Output {
 		case "out_logear_forwarder":
 			return out_logear_forwarder.Init(output)
 		default:
-			log.Fatalf("\"%s\" isn't right output type", t)
+			log.Fatalf("[ERROR] \"%s\" isn't right output type", t)
 		}
 	} else {
-		log.Fatal("You must specify type of output")
+		log.Fatal("[ERROR] You must specify type of output")
 	}
 	return nil
 }

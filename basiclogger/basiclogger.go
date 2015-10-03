@@ -33,10 +33,10 @@ func InitMessageQueue(length int) {
 
 func StartMessageQueue() chan bool {
 	if len(Inputs) == 0 {
-		log.Fatal("[messageQueue] Can't start without inputs. Please specify at least one.")
+		log.Fatal("[ERROR] [messageQueue] Can't start without inputs. Please specify at least one.")
 	}
 	if len(Outputs) == 0 {
-		log.Fatal("[messageQueue] Can't start without Outputs. Please specify at least one.")
+		log.Fatal("[ERROR] [messageQueue] Can't start without Outputs. Please specify at least one.")
 	}
 	for _, i := range Inputs {
 		go i.Listener()
@@ -49,14 +49,14 @@ func StartMessageQueue() chan bool {
 func AddOutput(o Output) {
 	if o != nil {
 		Outputs = append(Outputs, o)
-		log.Printf("[messageQueue] \"%s\" Output added to message queue", o.Tag())
+		log.Printf("[DEBUG] [messageQueue] \"%s\" Output added to message queue", o.Tag())
 	}
 }
 
 func AddInput(i Input) {
 	if i != nil {
 		Inputs = append(Inputs, i)
-		log.Printf("[messageQueue] \"%s\" Input added to message queue", i.Tag())
+		log.Printf("[DEBUG] [messageQueue] \"%s\" Input added to message queue", i.Tag())
 	}
 }
 
@@ -65,13 +65,13 @@ func messageQueueWorker(q chan bool) {
 		q <- true
 	}()
 	var message *Message
-	log.Print("[messageQueue] Queue worker started")
+	log.Print("[DEBUG] [messageQueue] Queue worker started")
 	for {
 		message = <-MessageQueue
 		for _, v := range Outputs {
 			if message != nil {
 				v.Send(message)
-				log.Printf("[messageQueue] %v", message)
+				log.Printf("[DEBUG] [messageQueue] %v", message)
 			}
 		}
 	}

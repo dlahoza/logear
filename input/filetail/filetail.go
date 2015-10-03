@@ -43,12 +43,12 @@ func (v *FileTail) Listener() {
 }
 
 func (v *FileTail) watcher() {
-	log.Printf("[%s] File watcher started", v.tag)
+	log.Printf("[DEBUG] [%s] File watcher started", v.tag)
 	for {
 		for file, _ := range v.files {
 			select {
 			case <-v.files[file].Dying():
-				log.Printf("[%s] File \"%s\" closed", v.tag, file)
+				log.Printf("[DEBUG] [%s] File \"%s\" closed", v.tag, file)
 				delete(v.files, file)
 			default:
 				continue
@@ -59,7 +59,7 @@ func (v *FileTail) watcher() {
 			f, _ := filepath.Glob(path)
 			for _, file := range f {
 				if _, ok := v.files[file]; !ok {
-					log.Printf("[%s] Found file \"%s\"", v.tag, file)
+					log.Printf("[DEBUG] [%s] Found file \"%s\"", v.tag, file)
 					tc := tail.Config{Follow: true, ReOpen: false, MustExist: true, Poll: true, Logger: tail.DiscardingLogger}
 					if s, err := ioutil.ReadFile(file + ".pos"); err == nil {
 						s := strings.Split(string(s), "\n")
@@ -67,7 +67,7 @@ func (v *FileTail) watcher() {
 							if ctime, err := strconv.Atoi(s[0]); err == nil && int64(ctime) == ctimeFile(file) {
 								if pos, err := strconv.Atoi(s[1]); err == nil {
 									tc.Location = &tail.SeekInfo{Whence: os.SEEK_CUR, Offset: int64(pos)}
-									log.Printf("[%s] Restoring position %d in file \"%s\"", v.tag, pos, file)
+									log.Printf("[DEBUG] [%s] Restoring position %d in file \"%s\"", v.tag, pos, file)
 								}
 							}
 						}
@@ -93,13 +93,13 @@ func (v *FileTail) worker(t *tail.Tail) {
 			j["@timestamp"] = j[v.timestamp]
 			v.messageQueue <- &basiclogger.Message{Time: time.Now(), Data: j}
 		} else {
-			log.Printf("[%s] Bogus message in \"%s\"", v.tag, t.Filename)
+			log.Printf("[WARN] [%s] Bogus message in \"%s\"", v.tag, t.Filename)
 		}
 		pos, _ := t.Tell()
 		ctime := ctimeFile(t.Filename)
 		posstr := strconv.Itoa(int(ctime)) + "\n" + strconv.Itoa(int(pos))
 		ioutil.WriteFile(t.Filename+".pos", []byte(posstr), 0644)
 	}
-	log.Printf("[%s] Closing file \"%s\"", v.tag, t.Filename)
+	log.Printf("[DEBUG] [%s] Closing file \"%s\"", v.tag, t.Filename)
 	t.Stop()
 }

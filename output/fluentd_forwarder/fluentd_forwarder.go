@@ -47,7 +47,7 @@ func Init(conf map[string]interface{}) *Fluentd_forwarder {
 			hostport := hostport_raw.(string)
 			submatch := hostport_re.FindSubmatch([]byte(hostport))
 			if submatch == nil {
-				log.Printf("[%s] Invalid host:port given: %s", module, hostport)
+				log.Printf("[WARN] [%s] Invalid host:port given: %s", module, hostport)
 			} else {
 				hosts = append(hosts, hostport)
 			}

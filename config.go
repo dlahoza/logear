@@ -22,10 +22,10 @@ const (
 
 func parseTomlFile(filename string) {
 	if data, err := ioutil.ReadFile(filename); err != nil {
-		log.Fatal("Can't read config file ", filename, ", error: ", err)
+		log.Fatal("[ERROR] Can't read config file ", filename, ", error: ", err)
 	} else {
 		if _, err := toml.Decode(string(data), &cfg); err != nil {
-			log.Fatal("Can't parse config file ", filename, ", error: ", err)
+			log.Fatal("[ERROR] Can't parse config file ", filename, ", error: ", err)
 		}
 	}
 }
@@ -33,7 +33,7 @@ func parseTomlFile(filename string) {
 func openFileLog(filename string) io.Writer {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
-		log.Fatal("Failed to open log file ", filename, ", error: ", err)
+		log.Fatal("[ERROR] Failed to open log file ", filename, ", error: ", err)
 	}
 	return file
 }
