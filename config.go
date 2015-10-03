@@ -40,9 +40,9 @@ func openFileLog(filename string) io.Writer {
 
 func readConfig() {
 	var (
-		configFile string
-		logFile    string
-		showHelp   bool
+		configFile            string
+		logFile               string
+		showHelp, showVersion bool
 	)
 	logFilter = &logutils.LevelFilter{
 		Levels:   logLevels,
@@ -53,9 +53,14 @@ func readConfig() {
 	flag.StringVar(&configFile, []string{"c", "-config"}, "/etc/logear/logear.conf", "config file")
 	flag.StringVar(&logFile, []string{"l", "-log"}, "", "log file")
 	flag.BoolVar(&showHelp, []string{"h", "-help"}, false, "display the help")
+	flag.BoolVar(&showVersion, []string{"v", "-version"}, false, "display version info")
 	flag.Parse()
 	if showHelp {
-		flag.PrintDefaults()
+		flag.Usage()
+		os.Exit(0)
+	}
+	if showVersion {
+		println(versionstring)
 		os.Exit(0)
 	}
 	parseTomlFile(configFile)
