@@ -1,7 +1,6 @@
 package filetail
 
 import (
-	"encoding/json"
 	"github.com/DLag/logear/basiclogger"
 	"github.com/hpcloud/tail"
 	"io/ioutil"
@@ -92,12 +91,16 @@ func (v *FileTail) watcher() {
 
 func (v *FileTail) worker(t *tail.Tail) {
 	for data := range t.Lines {
-		var j map[string]interface{}
-		err := json.Unmarshal([]byte(data.Text), &j)
+		var m map[string]interface{}
+		err := basiclogger.FilterData(v.filter, data.Text, &m)
 		if err == nil {
-			j["file"] = filepath.Base(t.Filename)
-			j["@timestamp"] = j[v.timestamp]
-			v.messageQueue <- &basiclogger.Message{Time: time.Now(), Data: j}
+			m["file"] = filepath.Base(t.Filename)
+			if len(v.timestamp) > 0 {
+				if timestamp, ok := m[v.timestamp]; ok {
+					m["@timestamp"] = timestamp
+				}
+			}
+			v.messageQueue <- &basiclogger.Message{Time: time.Now(), Data: m}
 		} else {
 			log.Printf("[WARN] [%s] Bogus message in \"%s\"", v.tag, t.Filename)
 		}

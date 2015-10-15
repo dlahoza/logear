@@ -32,12 +32,11 @@ func AddFilter(conf map[string]interface{}) {
 	log.Printf("[DEBUG] [filters] \"%s\" Filter added", name.(string))
 }
 
-func FilterData(name, data string) (*map[string]interface{}, error) {
-	var m map[string]interface{}
+func FilterData(name, data string, m *map[string]interface{}) error {
 	switch name {
 	case "json":
 		err := json.Unmarshal([]byte(data), &m)
-		return &m, err
+		return err
 	default:
 		if f, ok := filters[name]; ok {
 			if f.regexp != nil && len(f.template) > 0 {
@@ -48,13 +47,13 @@ func FilterData(name, data string) (*map[string]interface{}, error) {
 					j = strings.Replace(j, "$("+strconv.Itoa(i)+")", escaped, -1)
 				}
 				err := json.Unmarshal([]byte(j), &m)
-				return &m, err
+				return err
 			} else {
-				return nil, errors.New("Regexp filter error: " + name)
+				return errors.New("Regexp filter error: " + name)
 			}
 		} else {
-			return nil, errors.New("Unknown filter type \"" + name + "\"")
+			return errors.New("Unknown filter type \"" + name + "\"")
 		}
 	}
-	return nil, errors.New("Unknown error")
+	return errors.New("Unknown error")
 }
