@@ -20,6 +20,7 @@ type FileTail struct {
 	paths        []string
 	files        map[string]*tail.Tail
 	timestamp    string
+	filter       string
 	messageQueue chan *basiclogger.Message
 }
 
@@ -29,7 +30,12 @@ func Init(messageQueue chan *basiclogger.Message, conf map[string]interface{}) *
 	for _, path := range conf["path"].([]interface{}) {
 		paths = append(paths, path.(string))
 	}
-	v := &FileTail{tag: conf["tag"].(string), messageQueue: messageQueue, paths: paths, timestamp: conf["timestamp"].(string)}
+	v := &FileTail{
+		tag:          conf["tag"].(string),
+		messageQueue: messageQueue,
+		paths:        paths,
+		timestamp:    conf["timestamp"].(string),
+		filter:       conf["filter"].(string)}
 	return v
 }
 
