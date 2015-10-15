@@ -23,7 +23,7 @@ Logear support JSON and custom regexp filters. Regexp implemented with [Google R
 ## Inputs
 - **filetail** - File input with json, messagepack or custom formats
 Reads line by line from a file, parses it with json lib or with custom regexp.
-- **out_logear_forwarder** Fluentd_forwarder network protocol
+- **out_logear_forwarder** - Fluentd_forwarder network protocol
 Receive messages from another instance of Logear.
 
 ## Outputs
