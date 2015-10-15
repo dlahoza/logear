@@ -34,4 +34,4 @@ Delivers messages to Fluent with the native protocol. Supports messagepack and j
 Delivers messages to another instance of Logear.
 
 ## Examples
-You can find example config in [/example](https://github.com/DLag/logear/example/) directory.
+You can find example config in [/example](https://github.com/DLag/logear/tree/master/example) directory.
