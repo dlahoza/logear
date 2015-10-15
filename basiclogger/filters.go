@@ -3,6 +3,7 @@ package basiclogger
 import (
 	"encoding/json"
 	"errors"
+	"gopkg.in/vmihailenco/msgpack.v2"
 	"log"
 	"net/url"
 	"regexp"
@@ -36,6 +37,9 @@ func FilterData(name, data string, m *map[string]interface{}) error {
 	switch name {
 	case "json":
 		err := json.Unmarshal([]byte(data), &m)
+		return err
+	case "msgpack":
+		err := msgpack.Unmarshal([]byte(data), &m)
 		return err
 	default:
 		if f, ok := filters[name]; ok {

@@ -21,8 +21,8 @@ checks and encoding. This protocol can be more efficient than Lumberjack.
 Logear support JSON and custom regexp filters. Regexp implemented with [Google RE2 library](https://github.com/google/re2/).
 
 ## Inputs
-- **filetail** - File input with json, messagepack or custom formats
-Reads line by line from a file, parses it with json lib or with custom regexp.
+- **filetail** - File input with json, MessagePack or custom filters
+Reads line by line from a file, parses it with json, msgpack or with custom regexp.
 - **out_logear_forwarder** - Fluentd_forwarder network protocol
 Receive messages from another instance of Logear.
 
