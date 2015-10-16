@@ -41,9 +41,11 @@ func FilterData(name, data string, v interface{}) error {
 	switch name {
 	case "json":
 		err := json.Unmarshal([]byte(data), &m)
+		v = m
 		return err
 	case "msgpack":
 		err := msgpack.Unmarshal([]byte(data), &m)
+		v = m
 		return err
 	default:
 		if f, ok := filters[name]; ok {
