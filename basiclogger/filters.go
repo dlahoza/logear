@@ -49,6 +49,7 @@ func FilterData(name, data string, m interface{}) error {
 	default:
 		if f, ok := filters[name]; ok {
 			if f.regexp != nil && len(f.template) > 0 {
+				log.Printf("[DEBUG] [%s] UNfiltered DATA: \"%v\"", name, data)
 				matches := f.regexp.FindStringSubmatch(data)
 				j := f.template
 				for i, match := range matches {
