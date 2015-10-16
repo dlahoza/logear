@@ -5,7 +5,6 @@ import (
 	"errors"
 	"gopkg.in/vmihailenco/msgpack.v2"
 	"log"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -47,8 +46,8 @@ func FilterData(name, data string, m *map[string]interface{}) error {
 				matches := f.regexp.FindStringSubmatch(data)
 				j := f.template
 				for i, match := range matches {
-					escaped := url.QueryEscape(match)
-					j = strings.Replace(j, "$("+strconv.Itoa(i)+")", escaped, -1)
+					escaped, _ := json.Marshal(match)
+					j = strings.Replace(j, "$("+strconv.Itoa(i)+")", string(escaped), -1)
 				}
 				err := json.Unmarshal([]byte(j), &m)
 				return err

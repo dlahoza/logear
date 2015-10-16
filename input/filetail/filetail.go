@@ -24,6 +24,7 @@ type FileTail struct {
 }
 
 //TODO: directory for .pos files
+//TODO: config validation
 func Init(messageQueue chan *basiclogger.Message, conf map[string]interface{}) *FileTail {
 	var paths []string
 	for _, path := range conf["path"].([]interface{}) {
