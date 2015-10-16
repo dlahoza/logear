@@ -36,7 +36,7 @@ func AddFilter(conf map[string]interface{}) {
 	log.Printf("[DEBUG] [filters] \"%s\" Filter added", name.(string))
 }
 
-func FilterData(name, data string, m *map[string]interface{}) error {
+func FilterData(name, data string, m map[string]interface{}) error {
 	switch name {
 	case "json":
 		err := json.Unmarshal([]byte(data), &m)
@@ -54,7 +54,7 @@ func FilterData(name, data string, m *map[string]interface{}) error {
 					j = strings.Replace(j, "$("+strconv.Itoa(i)+")", string(escaped), -1)
 				}
 				log.Printf("[DEBUG] [%s] Filtered JSON: \"%s\"", name, j)
-				err := json.Unmarshal([]byte(j), &m)
+				err := json.Unmarshal([]byte(j), m)
 				m["message"] = data
 				return err
 			} else {
