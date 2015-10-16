@@ -92,8 +92,8 @@ func (v *FileTail) watcher() {
 
 func (v *FileTail) worker(t *tail.Tail) {
 	for data := range t.Lines {
-		var m map[string]interface{}
-		err := basiclogger.FilterData(v.filter, data.Text, m)
+		m := make(map[string]interface{})
+		err := basiclogger.FilterData(v.filter, data.Text, &m)
 		if err == nil {
 			m["file"] = filepath.Base(t.Filename)
 			if len(v.timestamp) > 0 {
