@@ -51,6 +51,7 @@ func logWatcher() {
 		}
 		if sig == syscall.SIGUSR1 {
 			logOpen()
+			log.Print("[DEBUG] Logfile reopen succesful")
 		}
 	}
 }
