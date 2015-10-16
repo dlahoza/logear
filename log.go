@@ -24,6 +24,7 @@ func openFileLog(filename string) io.Writer {
 
 func startLogging() {
 	logOpen()
+	reloadLogs = make(chan os.Signal)
 	signal.Notify(reloadLogs, os.Interrupt, os.Kill, syscall.SIGUSR1)
 	go logWatcher()
 }
