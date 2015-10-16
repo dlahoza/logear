@@ -12,6 +12,14 @@ Logging system designed to be fast, reliable and flexible but in same time simpl
 It can replace huge and slow systems like Logstash and Fluentd.
 Logear written in Go and doesn't require any specific environment.
 
+## Build and Install
+
+```
+# go get -u github.com/DLag/logear
+# mv $GOPATH/bin/logear /usr/local/sbin/logear
+# logear -v
+```
+
 ## Logear forwarder protocol
 
 The protocol implements serialisation with MessagePack, zlib compression and SSL certificate
