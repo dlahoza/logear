@@ -28,6 +28,9 @@ func AddFilter(conf map[string]interface{}) {
 	if err != nil {
 		log.Fatal("[ERROR] Incorrect regular expression")
 	}
+	if filters == nil {
+		filters = make(map[string]Filter)
+	}
 	filters[name.(string)] = Filter{regexp: r, template: template.(string)}
 	log.Printf("[DEBUG] [filters] \"%s\" Filter added", name.(string))
 }
