@@ -24,7 +24,7 @@ func AddFilter(conf map[string]interface{}) {
 	if !nameok || !regexpok || !templateok {
 		log.Fatal("[ERROR] Please specify all field of custom filter")
 	}
-	log.Print("[%s] \"%s\" \"%s\"", name.(string), regexpstr.(string), template.(string))
+	log.Printf("[%s] \"%s\" \"%s\"", name.(string), regexpstr.(string), template.(string))
 	r, err := regexp.Compile(regexpstr.(string))
 	if err != nil {
 		log.Fatal("[ERROR] Incorrect regular expression")
