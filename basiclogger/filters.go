@@ -36,7 +36,7 @@ func AddFilter(conf map[string]interface{}) {
 	log.Printf("[DEBUG] [filters] \"%s\" Filter added", name.(string))
 }
 
-func FilterData(name, data string, m *map[string]interface{}) error {
+func FilterData(name, data string, m interface{}) error {
 	switch name {
 	case "json":
 		err := json.Unmarshal([]byte(data), m)
