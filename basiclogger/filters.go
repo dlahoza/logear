@@ -53,7 +53,7 @@ func FilterData(name, data string, m *map[string]interface{}) error {
 					escaped, _ := json.Marshal(match)
 					j = strings.Replace(j, "$("+strconv.Itoa(i)+")", string(escaped), -1)
 				}
-				log.Printf("[DEBUG] [%s] Filtered JSON: \"%s\", name, j)
+				log.Printf("[DEBUG] [%s] Filtered JSON: \"%s\"", name, j)
 				err := json.Unmarshal([]byte(j), &m)
 				return err
 			} else {
