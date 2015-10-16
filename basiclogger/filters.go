@@ -40,11 +40,11 @@ func FilterData(name, data string, m interface{}) error {
 	switch name {
 	case "json":
 		err := json.Unmarshal([]byte(data), m)
-		log.Printf("[DEBUG] Filtered DATA: \"%v\"", name, m)
+		log.Printf("[DEBUG] [%s] Filtered DATA: \"%v\"", name, m)
 		return err
 	case "msgpack":
 		err := msgpack.Unmarshal([]byte(data), m)
-		log.Printf("[DEBUG] Filtered DATA: \"%v\"", name, m)
+		log.Printf("[DEBUG] [%s] Filtered DATA: \"%v\"", name, m)
 		return err
 	default:
 		if f, ok := filters[name]; ok {
@@ -57,7 +57,7 @@ func FilterData(name, data string, m interface{}) error {
 				}
 				log.Printf("[DEBUG] [%s] Filtered JSON: \"%s\"", name, j)
 				err := json.Unmarshal([]byte(j), m)
-				log.Printf("[DEBUG] Filtered DATA: \"%v\"", name, m)
+				log.Printf("[DEBUG] [%s] Filtered DATA: \"%v\"", name, m)
 				return err
 			} else {
 				return errors.New("Regexp filter error: " + name)
