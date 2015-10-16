@@ -24,7 +24,7 @@ func AddFilter(conf map[string]interface{}) {
 	if !nameok || !regexpok || !templateok {
 		log.Fatal("[ERROR] Please specify all field of custom filter")
 	}
-	log.Printf("[%s] \"%s\" \"%s\"", name.(string), regexpstr.(string), template.(string))
+	log.Printf("[DEBUG] [%s] Filter raw: \"%s\" \"%s\"", name.(string), regexpstr.(string), template.(string))
 	r, err := regexp.Compile(regexpstr.(string))
 	if err != nil {
 		log.Fatal("[ERROR] Incorrect regular expression")
@@ -53,6 +53,7 @@ func FilterData(name, data string, m *map[string]interface{}) error {
 					escaped, _ := json.Marshal(match)
 					j = strings.Replace(j, "$("+strconv.Itoa(i)+")", string(escaped), -1)
 				}
+				log.Printf("[DEBUG] [%s] Filtered JSON: \"%s\", name, j)
 				err := json.Unmarshal([]byte(j), &m)
 				return err
 			} else {
