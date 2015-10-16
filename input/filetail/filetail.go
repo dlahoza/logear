@@ -92,7 +92,7 @@ func (v *FileTail) watcher() {
 
 func (v *FileTail) worker(t *tail.Tail) {
 	for data := range t.Lines {
-		m := make(map[string]interface{})
+		var m map[string]interface{}
 		err := basiclogger.FilterData(v.filter, data.Text, &m)
 		m["message"] = data.Text
 		if err == nil {
