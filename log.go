@@ -47,8 +47,8 @@ func logOpen() {
 func logWatcher() {
 	for {
 		sig := <-reloadLogs
-		log.Printf("Get signal %v", sig)
-		if sig == syscall.SIGUSR1 {
+		log.Printf("Get signal %v, %v", sig, syscall.SIGUSR1)
+		if sig.String() == syscall.SIGUSR1.String() {
 			logOpen()
 			log.Print("[DEBUG] Logfile reopen succesful")
 		}
