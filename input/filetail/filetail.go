@@ -96,7 +96,6 @@ func (v *FileTail) worker(t *tail.Tail) {
 		err := basiclogger.FilterData(v.filter, data.Text, &m)
 		log.Printf("[DEBUG] [%s] Recieved from filter: \"%v\"", v.tag, m)
 		if err == nil {
-			m["message"] = data.Text
 			m["file"] = filepath.Base(t.Filename)
 			if len(v.timestamp) > 0 {
 				if timestamp, ok := m[v.timestamp]; ok {
