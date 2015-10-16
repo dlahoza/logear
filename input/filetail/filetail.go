@@ -106,9 +106,11 @@ func (v *FileTail) worker(t *tail.Tail) {
 						timestamp = basiclogger.ConvertTimestamp(v.timestamp_format, timestamp)
 						if len(timestamp) == 0 {
 							log.Printf("[WARN] [%s] Bogus timestamp in \"%s\"", v.tag, t.Filename)
+
+						} else {
+							m["@timestamp"] = timestamp
 						}
 					}
-					m["@timestamp"] = timestamp
 				}
 			}
 			v.messageQueue <- &basiclogger.Message{Time: time.Now(), Data: m}
