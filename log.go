@@ -48,12 +48,12 @@ func logWatcher() {
 	for {
 		sig := <-reloadLogs
 		log.Printf("Get signal %v", sig)
-		if sig == os.Interrupt || sig == os.Kill {
-			return
-		}
 		if sig == syscall.SIGUSR1 {
 			logOpen()
 			log.Print("[DEBUG] Logfile reopen succesful")
+		}
+		if sig == os.Interrupt || sig == os.Kill {
+			return
 		}
 	}
 }
