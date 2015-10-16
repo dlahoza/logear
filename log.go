@@ -47,6 +47,7 @@ func logOpen() {
 func logWatcher() {
 	for {
 		sig := <-reloadLogs
+		log.Printf("Get signal %v", sig)
 		if sig == os.Interrupt || sig == os.Kill {
 			return
 		}

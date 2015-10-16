@@ -55,5 +55,5 @@ func readConfig() {
 	}
 	parseTomlFile(configFile)
 	startLogging()
-	log.Printf("%s %s started", progname, version)
+	log.Printf("%s %s started with pid %d", progname, version, os.Getpid())
 }
