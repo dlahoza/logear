@@ -55,6 +55,7 @@ func FilterData(name, data string, m *map[string]interface{}) error {
 				}
 				log.Printf("[DEBUG] [%s] Filtered JSON: \"%s\"", name, j)
 				err := json.Unmarshal([]byte(j), &m)
+				m["message"] = data
 				return err
 			} else {
 				return errors.New("Regexp filter error: " + name)
