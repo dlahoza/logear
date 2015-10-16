@@ -15,12 +15,13 @@ import (
 const module = "filetail"
 
 type FileTail struct {
-	tag          string
-	paths        []string
-	files        map[string]*tail.Tail
-	timestamp    string
-	filter       string
-	messageQueue chan *basiclogger.Message
+	tag              string
+	paths            []string
+	files            map[string]*tail.Tail
+	timestamp        string
+	timestamp_format string
+	filter           string
+	messageQueue     chan *basiclogger.Message
 }
 
 //TODO: directory for .pos files
@@ -31,11 +32,12 @@ func Init(messageQueue chan *basiclogger.Message, conf map[string]interface{}) *
 		paths = append(paths, path.(string))
 	}
 	v := &FileTail{
-		tag:          conf["tag"].(string),
-		messageQueue: messageQueue,
-		paths:        paths,
-		timestamp:    conf["timestamp"].(string),
-		filter:       conf["filter"].(string)}
+		tag:              conf["tag"].(string),
+		messageQueue:     messageQueue,
+		paths:            paths,
+		timestamp:        conf["timestamp"].(string),
+		timestamp_format: conf["timestamp_format"].(string),
+		filter:           conf["filter"].(string)}
 	return v
 }
 
@@ -99,6 +101,13 @@ func (v *FileTail) worker(t *tail.Tail) {
 			m["file"] = filepath.Base(t.Filename)
 			if len(v.timestamp) > 0 {
 				if timestamp, ok := m[v.timestamp]; ok {
+					timestamp := timestamp.(string)
+					if len(v.timestamp_format) > 0 {
+						timestamp = basiclogger.ConvertTimestamp(v.timestamp_format, timestamp)
+						if len(timestamp) == 0 {
+							log.Printf("[WARN] [%s] Bogus timestamp in \"%s\"", v.tag, t.Filename)
+						}
+					}
 					m["@timestamp"] = timestamp
 				}
 			}
