@@ -36,16 +36,13 @@ func AddFilter(conf map[string]interface{}) {
 	log.Printf("[DEBUG] [filters] \"%s\" Filter added", name.(string))
 }
 
-func FilterData(name, data string, v interface{}) error {
-	m := make(map[string]interface{})
+func FilterData(name, data string, m *map[string]interface{}) error {
 	switch name {
 	case "json":
 		err := json.Unmarshal([]byte(data), &m)
-		v = m
 		return err
 	case "msgpack":
 		err := msgpack.Unmarshal([]byte(data), &m)
-		v = m
 		return err
 	default:
 		if f, ok := filters[name]; ok {
@@ -58,8 +55,6 @@ func FilterData(name, data string, v interface{}) error {
 				}
 				log.Printf("[DEBUG] [%s] Filtered JSON: \"%s\"", name, j)
 				err := json.Unmarshal([]byte(j), &m)
-				m["message"] = data
-				v = m
 				return err
 			} else {
 				return errors.New("Regexp filter error: " + name)
