@@ -35,63 +35,57 @@ func init() {
 }
 
 func Init(messageQueue chan *basiclogger.Message, conf map[string]interface{}) *In_logear_forwarder {
-	var SSLCertificate, SSLKey, SSLCA string
 	var tlsConfig tls.Config
-	var timeout int64
 	tag := conf["tag"].(string)
 	bind := conf["bind"].(string)
-	if timeout_raw, ok := conf["timeout"]; !ok || timeout_raw.(int64) <= 0 {
+	timeout := int64(basiclogger.GInt("timeout", conf))
+	if timeout <= 0 {
 		log.Fatal("[", module, "] You must specify right timeout")
-	} else {
-		timeout = timeout_raw.(int64)
 	}
-	if cert, ok := conf["ssl_cert"]; ok && len(cert.(string)) > 0 {
-		SSLCertificate = cert.(string)
-		if key, ok := conf["ssl_key"]; ok && len(key.(string)) > 0 {
-			SSLKey = key.(string)
-			if len(SSLCertificate) > 0 && len(SSLKey) > 0 {
-				tlsConfig.MinVersion = tls.VersionTLS12
-				log.Printf("[%s] Loading server ssl certificate and key from \"%s\" and \"%s\"", tag,
-					SSLCertificate, SSLKey)
-				cert, err := tls.LoadX509KeyPair(SSLCertificate, SSLKey)
-				if err != nil {
-					log.Fatalf("[%s] Failed loading server ssl certificate: %s", tag, err)
-				}
-				tlsConfig.Certificates = []tls.Certificate{cert}
-				if ca, ok := conf["ssl_ca"]; ok && len(ca.(string)) > 0 {
-					SSLCA = ca.(string)
-					if len(SSLCA) > 0 {
-						log.Printf("[%s] Loading CA certificate from file: %s\n", tag, SSLCA)
-						tlsConfig.ClientCAs = x509.NewCertPool()
-						tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
-						pemdata, err := ioutil.ReadFile(SSLCA)
-						if err != nil {
-							log.Fatalf("[%s] Failure reading CA certificate: %s\n", tag, err)
-						}
-
-						block, _ := pem.Decode(pemdata)
-						if block == nil {
-							log.Fatalf("[%s] Failed to decode PEM data of CA certificate from \"%s\"\n", tag, SSLCA)
-						}
-						if block.Type != "CERTIFICATE" {
-							log.Fatalf("[%s] This is not a certificate file: %s\n", tag, SSLCA)
-						}
-
-						cacert, err := x509.ParseCertificate(block.Bytes)
-						if err != nil {
-							log.Fatalf("[%s] Failed to parse CA certificate: %s\n", tag, SSLCA)
-						}
-						tlsConfig.ClientCAs.AddCert(cacert)
-					}
-				}
-				v := &In_logear_forwarder{tag: tag,
-					messageQueue: messageQueue,
-					tlsConfig:    tlsConfig,
-					bind:         bind,
-					timeout:      time.Second * time.Duration(timeout)}
-				return v
-			}
+	SSLCertificate := basiclogger.GString("ssl_cert", conf)
+	SSLKey := basiclogger.GString("ssl_key", conf)
+	SSLCA := basiclogger.GString("ssl_ca", conf)
+	if len(SSLCertificate) > 0 && len(SSLKey) > 0 {
+		tlsConfig.MinVersion = tls.VersionTLS12
+		log.Printf("[%s] Loading server ssl certificate and key from \"%s\" and \"%s\"", tag,
+			SSLCertificate, SSLKey)
+		cert, err := tls.LoadX509KeyPair(SSLCertificate, SSLKey)
+		if err != nil {
+			log.Fatalf("[%s] Failed loading server ssl certificate: %s", tag, err)
 		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
+		if len(SSLCA) > 0 {
+			log.Printf("[%s] Loading CA certificate from file: %s\n", tag, SSLCA)
+			tlsConfig.ClientCAs = x509.NewCertPool()
+			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+			pemdata, err := ioutil.ReadFile(SSLCA)
+			if err != nil {
+				log.Fatalf("[%s] Failure reading CA certificate: %s\n", tag, err)
+			}
+
+			block, _ := pem.Decode(pemdata)
+			if block == nil {
+				log.Fatalf("[%s] Failed to decode PEM data of CA certificate from \"%s\"\n", tag, SSLCA)
+			}
+			if block.Type != "CERTIFICATE" {
+				log.Fatalf("[%s] This is not a certificate file: %s\n", tag, SSLCA)
+			}
+
+			cacert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				log.Fatalf("[%s] Failed to parse CA certificate: %s\n", tag, SSLCA)
+			}
+			tlsConfig.ClientCAs.AddCert(cacert)
+		}
+
+		v := &In_logear_forwarder{tag: tag,
+			messageQueue: messageQueue,
+			tlsConfig:    tlsConfig,
+			bind:         bind,
+			timeout:      time.Second * time.Duration(timeout)}
+		return v
+	} else {
+		log.Fatal("[ERROR] You must specify ssl_cert and ssl_key")
 	}
 
 	return nil

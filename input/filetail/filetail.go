@@ -1,7 +1,7 @@
 package filetail
 
 import (
-	"github.com/DLag/logear/basiclogger"
+	bl "github.com/DLag/logear/basiclogger"
 	"github.com/hpcloud/tail"
 	"io/ioutil"
 	"log"
@@ -21,23 +21,19 @@ type FileTail struct {
 	timestamp        string
 	timestamp_format string
 	filter           string
-	messageQueue     chan *basiclogger.Message
+	messageQueue     chan *bl.Message
 }
 
 //TODO: directory for .pos files
 //TODO: config validation
-func Init(messageQueue chan *basiclogger.Message, conf map[string]interface{}) *FileTail {
-	var paths []string
-	for _, path := range conf["path"].([]interface{}) {
-		paths = append(paths, path.(string))
-	}
+func Init(messageQueue chan *bl.Message, conf map[string]interface{}) *FileTail {
 	v := &FileTail{
-		tag:              conf["tag"].(string),
+		tag:              bl.GString("tag", conf),
 		messageQueue:     messageQueue,
-		paths:            paths,
-		timestamp:        conf["timestamp"].(string),
-		timestamp_format: conf["timestamp_format"].(string),
-		filter:           conf["filter"].(string)}
+		paths:            bl.GArrString("path", conf),
+		timestamp:        bl.GString("timestamp", conf),
+		timestamp_format: bl.GString("timestamp_format", conf),
+		filter:           bl.GString("filter", conf)}
 	return v
 }
 
@@ -95,7 +91,7 @@ func (v *FileTail) watcher() {
 func (v *FileTail) worker(t *tail.Tail) {
 	for data := range t.Lines {
 		var m map[string]interface{}
-		err := basiclogger.FilterData(v.filter, data.Text, &m)
+		err := bl.FilterData(v.filter, data.Text, &m)
 		log.Printf("[DEBUG] [%s] Recieved from filter: \"%v\"", v.tag, m)
 		if err == nil {
 			m["file"] = filepath.Base(t.Filename)
@@ -103,17 +99,15 @@ func (v *FileTail) worker(t *tail.Tail) {
 				if timestamp, ok := m[v.timestamp]; ok {
 					timestamp := timestamp.(string)
 					if len(v.timestamp_format) > 0 {
-						timestamp = basiclogger.ConvertTimestamp(v.timestamp_format, timestamp)
+						timestamp = bl.ConvertTimestamp(v.timestamp_format, timestamp)
 						if len(timestamp) == 0 {
 							log.Printf("[WARN] [%s] Bogus timestamp in \"%s\"", v.tag, t.Filename)
-
-						} else {
-							m["@timestamp"] = timestamp
 						}
 					}
+					m["@timestamp"] = timestamp
 				}
 			}
-			v.messageQueue <- &basiclogger.Message{Time: time.Now(), Data: m}
+			v.messageQueue <- &bl.Message{Time: time.Now(), Data: m}
 		} else {
 			log.Printf("[WARN] [%s] Bogus message in \"%s\"", v.tag, t.Filename)
 		}

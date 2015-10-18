@@ -42,48 +42,29 @@ func init() {
 }
 
 func Init(conf map[string]interface{}) *Out_logear_forwarder {
-	if hosts_raw, ok := conf["hosts"]; !ok || len(hosts_raw.([]interface{})) == 0 {
-		log.Fatal("[", module, "] You must specify hosts")
+	hosts := basiclogger.GArrString("hosts", conf)
+	if len(hosts) == 0 {
+		log.Fatal("[", module, "] There is no valid hosts")
 	} else {
-		var hosts []string
-		for _, hostport_raw := range hosts_raw.([]interface{}) {
-			hostport := hostport_raw.(string)
-			submatch := hostport_re.FindSubmatch([]byte(hostport))
-			if submatch == nil {
-				log.Printf("[%s] Invalid host:port given: %s", module, hostport)
-			} else {
-				hosts = append(hosts, hostport)
-			}
-		}
-		if len(hosts) == 0 {
-			log.Fatal("[", module, "] There is no valid hosts")
+		timeout := int64(basiclogger.GInt("timeout", conf))
+		if timeout <= 0 {
+			log.Fatal("[", module, "] You must specify right timeout")
 		} else {
-			if timeout, ok := conf["timeout"]; !ok || timeout.(int64) <= 0 {
-				log.Fatal("[", module, "] You must specify right timeout")
-			} else {
-				var SSLCertificate, SSLKey, SSLCA string
-				if cert, ok := conf["ssl_cert"]; ok && len(cert.(string)) > 0 {
-					SSLCertificate = cert.(string)
-					if key, ok := conf["ssl_key"]; ok && len(key.(string)) > 0 {
-						SSLKey = key.(string)
-					}
-				}
-				if ca, ok := conf["ssl_ca"]; ok && len(ca.(string)) > 0 {
-					SSLCA = ca.(string)
-				}
-				tag, _ := conf["tag"].(string)
-				res := Out_logear_forwarder{
-					tag:            tag,
-					c:              make(chan *basiclogger.Message),
-					conn:           nil,
-					hosts:          hosts,
-					SSLCertificate: SSLCertificate,
-					SSLKey:         SSLKey,
-					SSLCA:          SSLCA,
-					timeout:        time.Second * time.Duration(timeout.(int64))}
-				res.loadCerts()
-				return &res
-			}
+			SSLCertificate := basiclogger.GString("ssl_cert", conf)
+			SSLKey := basiclogger.GString("ssl_key", conf)
+			SSLCA := basiclogger.GString("ssl_ca", conf)
+			tag := basiclogger.GString("tag", conf)
+			res := Out_logear_forwarder{
+				tag:            tag,
+				c:              make(chan *basiclogger.Message),
+				conn:           nil,
+				hosts:          hosts,
+				SSLCertificate: SSLCertificate,
+				SSLKey:         SSLKey,
+				SSLCA:          SSLCA,
+				timeout:        time.Second * time.Duration(timeout)}
+			res.loadCerts()
+			return &res
 		}
 	}
 	return nil

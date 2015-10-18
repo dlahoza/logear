@@ -10,3 +10,42 @@ func ConvertTimestamp(timestamp_format, timestamp string) string {
 	}
 	return ""
 }
+
+func GString(n string, m map[string]interface{}) string {
+	if raw, ok := m[n]; ok {
+		if v, ok := raw.(string); ok {
+			return v
+		}
+	}
+	return ""
+}
+
+func GInt(n string, m map[string]interface{}) int {
+	if raw, ok := m[n]; ok {
+		if v, ok := raw.(int); ok {
+			return v
+		}
+	}
+	return 0
+}
+
+func GBool(n string, m map[string]interface{}) bool {
+	if raw, ok := m[n]; ok {
+		if v, ok := raw.(bool); ok {
+			return v
+		}
+	}
+	return false
+}
+
+func GArrString(n string, m map[string]interface{}) []string {
+	var arr []string
+	if raw, ok := m[n]; ok {
+		if v, ok := raw.([]interface{}); ok {
+			for _, path := range v {
+				arr = append(arr, path.(string))
+			}
+		}
+	}
+	return arr
+}
