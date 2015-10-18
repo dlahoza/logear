@@ -87,7 +87,6 @@ func Init(messageQueue chan *basiclogger.Message, conf map[string]interface{}) *
 	} else {
 		log.Fatal("[ERROR] You must specify ssl_cert and ssl_key")
 	}
-
 	return nil
 }
 
