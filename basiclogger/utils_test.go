@@ -35,3 +35,21 @@ func TestGString(t *testing.T) {
 		}
 	}
 }
+
+func TestGInt(t *testing.T) {
+	cases := []struct {
+		n    string
+		m    map[string]interface{}
+		want int
+	}{
+		{n: "1", m: map[string]interface{}{"1": 1}, want: 1},
+		{n: "2", m: map[string]interface{}{"1": 2}, want: 0},
+		{n: "3", m: map[string]interface{}{"3": "a"}, want: 0},
+	}
+	for _, c := range cases {
+		got := GInt(c.n, c.m)
+		if got != c.want {
+			t.Errorf("GInt(%q, %q) == %q, want %q", c.n, c.m, got, c.want)
+		}
+	}
+}

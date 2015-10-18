@@ -45,7 +45,7 @@ func Init(conf map[string]interface{}) *Fluentd_forwarder {
 	} else {
 		timeout := int64(basiclogger.GInt("timeout", conf))
 		if timeout <= 0 {
-			log.Fatalf("[%s] You must specify right timeout (%d)", module, basiclogger.GInt("timeout", conf))
+			log.Fatalf("[%s] You must specify right timeout (%d)", module, conf["timeout"].(int))
 		} else {
 			SSLCertificate := basiclogger.GString("ssl_cert", conf)
 			SSLKey := basiclogger.GString("ssl_key", conf)
