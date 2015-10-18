@@ -42,8 +42,8 @@ func TestGInt(t *testing.T) {
 		m    map[string]interface{}
 		want int
 	}{
-		{n: "1", m: map[string]interface{}{"1": 1}, want: 1},
-		{n: "2", m: map[string]interface{}{"1": 2}, want: 0},
+		{n: "1", m: map[string]interface{}{"1": int64(1)}, want: 1},
+		{n: "2", m: map[string]interface{}{"1": int64(2)}, want: 0},
 		{n: "3", m: map[string]interface{}{"3": "a"}, want: 0},
 	}
 	for _, c := range cases {

@@ -22,8 +22,8 @@ func GString(n string, m map[string]interface{}) string {
 
 func GInt(n string, m map[string]interface{}) int {
 	if raw, ok := m[n]; ok {
-		if v, ok := raw.(int); ok {
-			return v
+		if v, ok := raw.(int64); ok {
+			return int(v)
 		}
 	}
 	return 0
