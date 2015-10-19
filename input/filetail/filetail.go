@@ -47,7 +47,7 @@ func (v *FileTail) Listener() {
 }
 
 func (v *FileTail) watcher() {
-	log.Printf("[DEBUG] [%s] File watcher started", v.tag)
+	log.Printf("[INFO] [%s] File watcher started", v.tag)
 	for {
 		for file, _ := range v.files {
 			select {

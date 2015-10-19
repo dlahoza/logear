@@ -33,7 +33,7 @@ func AddFilter(conf map[string]interface{}) {
 		filters = make(map[string]Filter)
 	}
 	filters[name.(string)] = Filter{regexp: r, template: template.(string)}
-	log.Printf("[DEBUG] [filters] \"%s\" Filter added", name.(string))
+	log.Printf("[INFO] [filters] \"%s\" Filter added", name.(string))
 }
 
 func FilterData(name, data string, m interface{}) error {

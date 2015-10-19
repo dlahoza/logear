@@ -49,14 +49,14 @@ func StartMessageQueue() chan bool {
 func AddOutput(o Output) {
 	if o != nil {
 		Outputs = append(Outputs, o)
-		log.Printf("[DEBUG] [messageQueue] \"%s\" Output added to message queue", o.Tag())
+		log.Printf("[INFO] [messageQueue] \"%s\" Output added to message queue", o.Tag())
 	}
 }
 
 func AddInput(i Input) {
 	if i != nil {
 		Inputs = append(Inputs, i)
-		log.Printf("[DEBUG] [messageQueue] \"%s\" Input added to message queue", i.Tag())
+		log.Printf("[INFO] [messageQueue] \"%s\" Input added to message queue", i.Tag())
 	}
 }
 
@@ -65,7 +65,7 @@ func messageQueueWorker(q chan bool) {
 		q <- true
 	}()
 	var message *Message
-	log.Print("[DEBUG] [messageQueue] Queue worker started")
+	log.Print("[INFO] [messageQueue] Queue worker started")
 	for {
 		message = <-MessageQueue
 		for _, v := range Outputs {

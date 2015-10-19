@@ -12,7 +12,7 @@ import (
 var (
 	cfg       map[string]interface{}
 	logFilter *logutils.LevelFilter
-	logLevels = []logutils.LogLevel{"DEBUG", "WARN", "ERROR"}
+	logLevels = []logutils.LogLevel{"DEBUG", "INFO", "WARN", "ERROR"}
 )
 
 const (
@@ -55,5 +55,5 @@ func readConfig() {
 	}
 	parseTomlFile(configFile)
 	startLogging()
-	log.Printf("%s %s started with pid %d", progname, version, os.Getpid())
+	log.Printf("[INFO] %s started with pid %d", versionstring, os.Getpid())
 }

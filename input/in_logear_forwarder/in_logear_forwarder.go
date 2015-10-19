@@ -36,44 +36,44 @@ func init() {
 
 func Init(messageQueue chan *basiclogger.Message, conf map[string]interface{}) *In_logear_forwarder {
 	var tlsConfig tls.Config
-	tag := conf["tag"].(string)
-	bind := conf["bind"].(string)
+	tag := basiclogger.GString("tag", conf)
+	bind := basiclogger.GString("bind", conf)
 	timeout := int64(basiclogger.GInt("timeout", conf))
 	if timeout <= 0 {
-		log.Fatal("[", module, "] You must specify right timeout")
+		log.Fatalf("[ERROR] [%s] You must specify right timeout (%d)", module, timeout)
 	}
 	SSLCertificate := basiclogger.GString("ssl_cert", conf)
 	SSLKey := basiclogger.GString("ssl_key", conf)
 	SSLCA := basiclogger.GString("ssl_ca", conf)
 	if len(SSLCertificate) > 0 && len(SSLKey) > 0 {
 		tlsConfig.MinVersion = tls.VersionTLS12
-		log.Printf("[%s] Loading server ssl certificate and key from \"%s\" and \"%s\"", tag,
+		log.Printf("[INFO] [%s] Loading server ssl certificate and key from \"%s\" and \"%s\"", tag,
 			SSLCertificate, SSLKey)
 		cert, err := tls.LoadX509KeyPair(SSLCertificate, SSLKey)
 		if err != nil {
-			log.Fatalf("[%s] Failed loading server ssl certificate: %s", tag, err)
+			log.Fatalf("[ERROR] [%s] Failed loading server ssl certificate: %s", tag, err)
 		}
 		tlsConfig.Certificates = []tls.Certificate{cert}
 		if len(SSLCA) > 0 {
-			log.Printf("[%s] Loading CA certificate from file: %s\n", tag, SSLCA)
+			log.Printf("[INFO] [%s] Loading CA certificate from file: %s\n", tag, SSLCA)
 			tlsConfig.ClientCAs = x509.NewCertPool()
 			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 			pemdata, err := ioutil.ReadFile(SSLCA)
 			if err != nil {
-				log.Fatalf("[%s] Failure reading CA certificate: %s\n", tag, err)
+				log.Fatalf("[ERROR] [%s] Failure reading CA certificate: %s\n", tag, err)
 			}
 
 			block, _ := pem.Decode(pemdata)
 			if block == nil {
-				log.Fatalf("[%s] Failed to decode PEM data of CA certificate from \"%s\"\n", tag, SSLCA)
+				log.Fatalf("[ERROR] [%s] Failed to decode PEM data of CA certificate from \"%s\"\n", tag, SSLCA)
 			}
 			if block.Type != "CERTIFICATE" {
-				log.Fatalf("[%s] This is not a certificate file: %s\n", tag, SSLCA)
+				log.Fatalf("[ERROR] [%s] This is not a certificate file: %s\n", tag, SSLCA)
 			}
 
 			cacert, err := x509.ParseCertificate(block.Bytes)
 			if err != nil {
-				log.Fatalf("[%s] Failed to parse CA certificate: %s\n", tag, SSLCA)
+				log.Fatalf("[ERROR] [%s] Failed to parse CA certificate: %s\n", tag, SSLCA)
 			}
 			tlsConfig.ClientCAs.AddCert(cacert)
 		}
@@ -85,7 +85,7 @@ func Init(messageQueue chan *basiclogger.Message, conf map[string]interface{}) *
 			timeout:      time.Second * time.Duration(timeout)}
 		return v
 	} else {
-		log.Fatal("[ERROR] You must specify ssl_cert and ssl_key")
+		log.Fatalf("[ERROR] [%s] You must specify ssl_cert and ssl_key", module)
 	}
 	return nil
 }
@@ -104,7 +104,7 @@ func (v *In_logear_forwarder) listen() {
 		log.Fatalf("[ERROR] [%s] Can't start listen \"%s\", error: %v", v.tag, v.bind, err)
 	}
 	defer listener.Close()
-	log.Printf("[DEBUG] [%s] Waiting for connections", v.tag)
+	log.Printf("[INFO] [%s] Waiting for connections", v.tag)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
