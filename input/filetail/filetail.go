@@ -90,6 +90,7 @@ func (v *FileTail) watcher() {
 
 func (v *FileTail) worker(t *tail.Tail) {
 	for data := range t.Lines {
+		recvtime := time.Now()
 		var m map[string]interface{}
 		err := bl.FilterData(v.filter, data.Text, &m)
 		log.Printf("[DEBUG] [%s] Recieved from filter: \"%v\"", v.tag, m)
@@ -99,15 +100,14 @@ func (v *FileTail) worker(t *tail.Tail) {
 				if timestamp, ok := m[v.timestamp]; ok {
 					timestamp := timestamp.(string)
 					if len(v.timestamp_format) > 0 {
-						timestamp = bl.ConvertTimestamp(v.timestamp_format, timestamp)
-						if len(timestamp) == 0 {
+						recvtime, err = time.Parse(v.timestamp_format, timestamp)
+						if err != nil {
 							log.Printf("[WARN] [%s] Bogus timestamp in \"%s\"", v.tag, t.Filename)
 						}
 					}
-					m["@timestamp"] = timestamp
 				}
 			}
-			v.messageQueue <- &bl.Message{Time: time.Now(), Data: m}
+			v.messageQueue <- &bl.Message{Time: recvtime, Data: m}
 		} else {
 			log.Printf("[WARN] [%s] Bogus message in \"%s\"", v.tag, t.Filename)
 			log.Printf("[DEBUG] [%s] file \"%s\": %s", v.tag, t.Filename, data.Text)
