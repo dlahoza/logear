@@ -1,0 +1,67 @@
+#!/bin/sh
+
+# PROVIDE: logear
+# REQUIRE: DAEMON
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf to
+# enable logear:
+#
+# logear_enable (bool): Set to NO by default.  Set it to YES to
+#         enable logear.
+#
+
+. /etc/rc.subr
+
+name="logear"
+rcvar=logear_enable
+
+command="/usr/local/sbin/${name}"
+
+load_rc_config $name
+
+: ${logear_enable="NO"}
+: ${logear_config="/usr/local/etc/logear/logear.conf"}
+: ${logear_logfile="/var/log/logear.log"}
+
+required_files=$logear_config
+logear_user="nobody"
+logear_limits_args=""
+pidfile="/var/run/logear.pid"
+command="/usr/sbin/daemon"
+procname="/usr/local/sbin/logear"
+command_args="-r -f -p ${pidfile} ${procname} -c ${logear_config} -l ${logear_logfile}"
+
+
+start_precmd="${name}_prestart"
+start_postcmd="${name}_poststart"
+stop_precmd="${name}_prestop"
+
+logear_prestart()
+{
+        if [ ! -d `dirname ${pidfile}` ] ; then
+
+                /bin/mkdir `dirname ${pidfile}`
+                /usr/sbin/chown -R 65534:65534 `dirname ${pidfile}`
+        fi
+        return 0
+}
+
+logear_poststart()
+{
+        local timeout=15
+        while [ ! -f "${pidfile}" -a ${timeout} -gt 0 ]; do
+                timeout=$(( timeout - 1 ))
+                sleep 1
+        done
+        #/usr/bin/killall logear
+        return 0
+}
+
+logear_prestop(){
+        exec 2>/dev/null
+        /bin/ps -o pid,ppid -ax | /usr/bin/grep `/bin/cat ${pidfile}`| /usr/bin/awk '{print $2}' | /usr/bin/xargs -n1 /bin/kill
+}
+
+
+run_rc_command "$1"

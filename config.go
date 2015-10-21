@@ -16,7 +16,7 @@ var (
 )
 
 const (
-	logMinLevel = logutils.LogLevel("DEBUG")
+	logMinLevel = logutils.LogLevel("INFO")
 )
 
 func parseTomlFile(filename string) {
@@ -55,5 +55,5 @@ func readConfig() {
 	}
 	parseTomlFile(configFile)
 	startLogging()
-	log.Printf("[INFO] %s started with pid %d", versionstring, os.Getpid())
+	log.Printf("%s started with pid %d", versionstring, os.Getpid())
 }
