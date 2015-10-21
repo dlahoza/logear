@@ -25,7 +25,7 @@ load_rc_config $name
 : ${logear_logfile="/var/log/logear.log"}
 
 required_files=$logear_config
-logear_user="nobody"
+logear_user="root"
 logear_limits_args=""
 pidfile="/var/run/logear.pid"
 command="/usr/sbin/daemon"
@@ -42,7 +42,7 @@ logear_prestart()
         if [ ! -d `dirname ${pidfile}` ] ; then
 
                 /bin/mkdir `dirname ${pidfile}`
-                /usr/sbin/chown -R 65534:65534 `dirname ${pidfile}`
+                /usr/sbin/chown -R $logear_user:$logear_user `dirname ${pidfile}`
         fi
         return 0
 }
