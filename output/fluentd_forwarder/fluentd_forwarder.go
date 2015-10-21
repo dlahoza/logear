@@ -73,6 +73,10 @@ func (v *Fluentd_forwarder) Tag() string {
 
 func (v *Fluentd_forwarder) Send(message *basiclogger.Message) error {
 	var err error
+	if _, err = time.Parse(basiclogger.TIMEFORMAT, basiclogger.GString("@timestamp", message.Data)); err != nil {
+		fmt.Printf("[WARN] [%s] Bogus @timestamp field: %v", v.tag, message.Data["@timestamp"])
+		message.Data["@timestamp"] = message.Time.Format(basiclogger.TIMEFORMAT)
+	}
 	now := time.Now().UnixNano()
 	for {
 		if v.conn == nil {

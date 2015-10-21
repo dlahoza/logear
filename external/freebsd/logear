@@ -22,7 +22,6 @@ load_rc_config $name
 
 : ${logear_enable="NO"}
 : ${logear_config="/usr/local/etc/logear/logear.conf"}
-: ${logear_logfile="/var/log/logear.log"}
 
 required_files=$logear_config
 logear_user="root"
@@ -30,7 +29,7 @@ logear_limits_args=""
 pidfile="/var/run/logear.pid"
 command="/usr/sbin/daemon"
 procname="/usr/local/sbin/logear"
-command_args="-r -f -p ${pidfile} ${procname} -c ${logear_config} -l ${logear_logfile}"
+command_args="-r -f -p ${pidfile} ${procname} -c ${logear_config}"
 
 
 start_precmd="${name}_prestart"
