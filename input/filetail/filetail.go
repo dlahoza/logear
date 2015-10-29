@@ -109,8 +109,7 @@ func (v *FileTail) worker(t *tail.Tail) {
 			}
 			v.messageQueue <- &bl.Message{Time: recvtime, Data: m}
 		} else {
-			log.Printf("[WARN] [%s] Bogus message in \"%s\"", v.tag, t.Filename)
-			log.Printf("[DEBUG] [%s] file \"%s\": %s", v.tag, t.Filename, data.Text)
+			log.Printf("[WARN] [%s] Bogus message in file \"%s\": %s", v.tag, t.Filename, data.Text)
 		}
 		pos, _ := t.Tell()
 		ctime := ctimeFile(t.Filename)
