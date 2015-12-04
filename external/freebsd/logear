@@ -16,8 +16,6 @@
 name="logear"
 rcvar=logear_enable
 
-command="/usr/local/sbin/${name}"
-
 load_rc_config $name
 
 : ${logear_enable="NO"}

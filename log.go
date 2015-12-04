@@ -25,7 +25,7 @@ func openFileLog(filename string) io.Writer {
 func startLogging() {
 	logOpen()
 	reloadLogs = make(chan os.Signal)
-	signal.Notify(reloadLogs, os.Interrupt, os.Kill, syscall.SIGUSR1)
+	signal.Notify(reloadLogs, syscall.SIGUSR1)
 	go logWatcher()
 }
 
@@ -50,9 +50,6 @@ func logWatcher() {
 		if sig == syscall.SIGUSR1 {
 			logOpen()
 			log.Print("[DEBUG] Logfile reopen succesful")
-		}
-		if sig == os.Interrupt || sig == os.Kill {
-			return
 		}
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
 )
 
 var (
@@ -51,6 +52,8 @@ func readConfig() {
 	}
 	if showVersion {
 		println(versionstring)
+		println("OS: " + runtime.GOOS)
+		println("Architecture: " + runtime.GOARCH)
 		os.Exit(0)
 	}
 	parseTomlFile(configFile)

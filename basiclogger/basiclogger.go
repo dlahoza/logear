@@ -6,10 +6,15 @@ import (
 )
 
 var (
-	MessageQueue chan *Message
-	Outputs      = []Output{}
-	Inputs       = []Input{}
+	MessageQueue   chan *Message
+	Outputs        = []Output{}
+	Inputs         = []Input{}
+	InputsCatalog  = map[string]InputInitFunc{}
+	OutputsCatalog = map[string]OutputInitFunc{}
 )
+
+type InputInitFunc func(chan *Message, map[string]interface{}) Input
+type OutputInitFunc func(map[string]interface{}) Output
 
 type Message struct {
 	Time time.Time
@@ -26,9 +31,22 @@ type Input interface {
 	Tag() string
 }
 
+func RegisterInput(name string, f InputInitFunc) {
+	InputsCatalog[name] = f
+}
+
+func RegisterOutput(name string, f OutputInitFunc) {
+	OutputsCatalog[name] = f
+}
+
 func InitMessageQueue(length int) {
 	MessageQueue = make(chan *Message, length)
-
+	for k, _ := range InputsCatalog {
+		log.Printf("[DEBUG] Found input plugin: %s", k)
+	}
+	for k, _ := range OutputsCatalog {
+		log.Printf("[DEBUG] Found output plugin: %s", k)
+	}
 }
 
 func StartMessageQueue() chan bool {

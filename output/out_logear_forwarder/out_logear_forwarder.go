@@ -8,7 +8,7 @@ import (
 	"encoding/binary"
 	"encoding/pem"
 	"fmt"
-	"github.com/DLag/logear/basiclogger"
+	bl "github.com/DLag/logear/basiclogger"
 	"gopkg.in/vmihailenco/msgpack.v2"
 	"io/ioutil"
 	"log"
@@ -23,7 +23,7 @@ const module = "out_logear_forwarder"
 
 type Out_logear_forwarder struct {
 	tag                           string
-	c                             chan *basiclogger.Message
+	c                             chan *bl.Message
 	conn                          net.Conn
 	SSLCertificate, SSLKey, SSLCA string
 	tlsConfig                     tls.Config
@@ -39,24 +39,25 @@ var hostport_re, _ = regexp.Compile("^(.+):([0-9]+)$")
 func init() {
 	hostname, _ = os.Hostname()
 	rand.Seed(time.Now().UnixNano())
+	bl.RegisterOutput(module, Init)
 }
 
-func Init(conf map[string]interface{}) *Out_logear_forwarder {
-	hosts := basiclogger.GArrString("hosts", conf)
+func Init(conf map[string]interface{}) bl.Output {
+	hosts := bl.GArrString("hosts", conf)
 	if len(hosts) == 0 {
 		log.Fatalf("[ERROR] [%s] There is no valid hosts", module)
 	} else {
-		timeout := int64(basiclogger.GInt("timeout", conf))
+		timeout := int64(bl.GInt("timeout", conf))
 		if timeout <= 0 {
 			log.Fatalf("[ERROR] [%s] You must specify right timeout (%v)", module, timeout)
 		} else {
-			SSLCertificate := basiclogger.GString("ssl_cert", conf)
-			SSLKey := basiclogger.GString("ssl_key", conf)
-			SSLCA := basiclogger.GString("ssl_ca", conf)
-			tag := basiclogger.GString("tag", conf)
+			SSLCertificate := bl.GString("ssl_cert", conf)
+			SSLKey := bl.GString("ssl_key", conf)
+			SSLCA := bl.GString("ssl_ca", conf)
+			tag := bl.GString("tag", conf)
 			res := Out_logear_forwarder{
 				tag:            tag,
-				c:              make(chan *basiclogger.Message),
+				c:              make(chan *bl.Message),
 				conn:           nil,
 				hosts:          hosts,
 				SSLCertificate: SSLCertificate,
@@ -74,11 +75,11 @@ func (v *Out_logear_forwarder) Tag() string {
 	return v.tag
 }
 
-func (v *Out_logear_forwarder) Send(message *basiclogger.Message) error {
+func (v *Out_logear_forwarder) Send(message *bl.Message) error {
 	var err error
-	if _, err = time.Parse(basiclogger.TIMEFORMAT, basiclogger.GString("@timestamp", message.Data)); err != nil {
+	if _, err = time.Parse(bl.TIMEFORMAT, bl.GString("@timestamp", message.Data)); err != nil {
 		fmt.Printf("[WARN] [%s] Bogus @timestamp field: %v", v.tag, message.Data["@timestamp"])
-		message.Data["@timestamp"] = message.Time.Format(basiclogger.TIMEFORMAT)
+		message.Data["@timestamp"] = message.Time.Format(bl.TIMEFORMAT)
 	}
 	for {
 		if v.conn == nil {

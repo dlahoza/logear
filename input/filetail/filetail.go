@@ -24,9 +24,13 @@ type FileTail struct {
 	messageQueue     chan *bl.Message
 }
 
+func init() {
+	bl.RegisterInput(module, Init)
+}
+
 //TODO: directory for .pos files
 //TODO: config validation
-func Init(messageQueue chan *bl.Message, conf map[string]interface{}) *FileTail {
+func Init(messageQueue chan *bl.Message, conf map[string]interface{}) bl.Input {
 	v := &FileTail{
 		tag:              bl.GString("tag", conf),
 		messageQueue:     messageQueue,

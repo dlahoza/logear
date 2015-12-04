@@ -7,7 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/binary"
 	"encoding/pem"
-	"github.com/DLag/logear/basiclogger"
+	bl "github.com/DLag/logear/basiclogger"
 	"gopkg.in/vmihailenco/msgpack.v2"
 	"io"
 	"io/ioutil"
@@ -22,7 +22,7 @@ const module = "in_logear_forwarder"
 
 type In_logear_forwarder struct {
 	tag          string
-	messageQueue chan *basiclogger.Message
+	messageQueue chan *bl.Message
 	tlsConfig    tls.Config
 	bind         string
 	timeout      time.Duration
@@ -32,19 +32,20 @@ var hostport_re, _ = regexp.Compile("^(.+):([0-9]+)$")
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	bl.RegisterInput(module, Init)
 }
 
-func Init(messageQueue chan *basiclogger.Message, conf map[string]interface{}) *In_logear_forwarder {
+func Init(messageQueue chan *bl.Message, conf map[string]interface{}) bl.Input {
 	var tlsConfig tls.Config
-	tag := basiclogger.GString("tag", conf)
-	bind := basiclogger.GString("bind", conf)
-	timeout := int64(basiclogger.GInt("timeout", conf))
+	tag := bl.GString("tag", conf)
+	bind := bl.GString("bind", conf)
+	timeout := int64(bl.GInt("timeout", conf))
 	if timeout <= 0 {
 		log.Fatalf("[ERROR] [%s] You must specify right timeout (%d)", module, timeout)
 	}
-	SSLCertificate := basiclogger.GString("ssl_cert", conf)
-	SSLKey := basiclogger.GString("ssl_key", conf)
-	SSLCA := basiclogger.GString("ssl_ca", conf)
+	SSLCertificate := bl.GString("ssl_cert", conf)
+	SSLKey := bl.GString("ssl_key", conf)
+	SSLCA := bl.GString("ssl_ca", conf)
 	if len(SSLCertificate) > 0 && len(SSLKey) > 0 {
 		tlsConfig.MinVersion = tls.VersionTLS12
 		log.Printf("[INFO] [%s] Loading server ssl certificate and key from \"%s\" and \"%s\"", tag,
@@ -163,7 +164,7 @@ func (v *In_logear_forwarder) worker(conn net.Conn) {
 		if _, ok := data["@timestamp"]; !ok {
 			data["@timestamp"] = time.Now()
 		}
-		v.messageQueue <- &basiclogger.Message{Time: time.Now(), Data: data}
+		v.messageQueue <- &bl.Message{Time: time.Now(), Data: data}
 	}
 }
 
