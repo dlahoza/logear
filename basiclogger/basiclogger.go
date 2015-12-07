@@ -39,6 +39,32 @@ func RegisterOutput(name string, f OutputInitFunc) {
 	OutputsCatalog[name] = f
 }
 
+func InitInput(input map[string]interface{}) Input {
+	if v, ok := input["type"]; ok {
+		t := v.(string)
+		if v, ok := InputsCatalog[t]; ok {
+			return v(MessageQueue, input)
+		}
+		log.Fatalf("[ERROR] \"%s\" isn't right input type", t)
+	} else {
+		log.Fatal("[ERROR] You must specify type of input")
+	}
+	return nil
+}
+
+func InitOutput(output map[string]interface{}) Output {
+	if v, ok := output["type"]; ok {
+		t := v.(string)
+		if v, ok := OutputsCatalog[t]; ok {
+			return v(output)
+		}
+		log.Fatalf("[ERROR] \"%s\" isn't right output type", t)
+	} else {
+		log.Fatal("[ERROR] You must specify type of output")
+	}
+	return nil
+}
+
 func InitMessageQueue(length int) {
 	MessageQueue = make(chan *Message, length)
 	for k, _ := range InputsCatalog {
