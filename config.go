@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/BurntSushi/toml"
-	flag "github.com/docker/docker/pkg/mflag"
+	flag "github.com/getgauge/mflag"
 	"github.com/hashicorp/logutils"
 	"io/ioutil"
 	"log"
