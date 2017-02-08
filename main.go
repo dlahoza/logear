@@ -11,21 +11,21 @@ func init() {
 func main() {
 	bl.InitMessageQueue(1)
 	//Initializing filters
-	if filters, ok := cfg["filter"]; ok {
+	if filters, ok := cfg.getSection("filter"); ok {
 		filters := filters.([]map[string]interface{})
 		for _, filter := range filters {
 			bl.AddFilter(filter)
 		}
 	}
 	//Initializing outputs
-	if outputs, ok := cfg["output"]; ok {
+	if outputs, ok := cfg.getSection("output"); ok {
 		outputs := outputs.([]map[string]interface{})
 		for _, output := range outputs {
 			bl.AddOutput(bl.InitOutput(output))
 		}
 	}
 	//Initializing inputs
-	if inputs, ok := cfg["input"]; ok {
+	if inputs, ok := cfg.getSection("input"); ok {
 		inputs := inputs.([]map[string]interface{})
 		for _, input := range inputs {
 			bl.AddInput(bl.InitInput(input))

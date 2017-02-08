@@ -33,7 +33,7 @@ func logOpen() {
 	if logFile != "" {
 		logFilter.Writer = openFileLog(logFile)
 	} else {
-		if v, ok := cfg["main"]; ok {
+		if v, ok := cfg.getSection("main"); ok {
 			if v, ok := v.(map[string]interface{})["logfile"]; ok {
 				logFilter.Writer = openFileLog(v.(string))
 			}
