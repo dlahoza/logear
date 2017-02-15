@@ -90,7 +90,7 @@ func overrideByEnv(originalData interface{}, sectionName string) interface{} {
 			switch reflect.TypeOf(originalData).Kind()  {
 			case reflect.Map:
 				data := originalData.(map[string]interface{})
-				applyInMap(envNameValue, data)
+				applyProcess(envNameValue, data)
 				originalData = data
 			case reflect.Slice:
 				data := originalData.([]map[string]interface{})
@@ -100,10 +100,10 @@ func overrideByEnv(originalData interface{}, sectionName string) interface{} {
 					lastIndex := len(data) - 1
 					if index > lastIndex {
 						newData := make(map[string]interface{})
-						applyInMap(envNameValue, newData)
+						applyProcess(envNameValue, newData)
 						data = append(data, newData)
 					} else {
-						applyInMap(envNameValue, data[index])
+						applyProcess(envNameValue, data[index])
 					}
 				}
 				originalData = data
@@ -113,7 +113,7 @@ func overrideByEnv(originalData interface{}, sectionName string) interface{} {
 	return originalData
 }
 
-func applyInMap(env []string, data map[string]interface{}) {
+func applyProcess(env []string, data map[string]interface{}) {
 	var propName string
 	var index int
 	var isArray bool = false
@@ -133,20 +133,42 @@ func applyInMap(env []string, data map[string]interface{}) {
 
 	if _, ok := data[propName]; ok {
 		switch reflect.TypeOf(data[propName]).Kind() {
-		case reflect.String:
-			data[propName] = env[1]
-		case reflect.Slice:
+		case reflect.Slice, reflect.Array:
 			lastIndex := len(data[propName].([]interface{})) - 1
 			if index > lastIndex {
 				data[propName] = append(data[propName].([]interface{}), env[1])
 			} else {
-				data[propName].([]interface{})[index] = env[1]
+				data[propName].([]interface{})[index] = apply(data[propName].([]interface{})[index], env[1])
 			}
+		default:
+			data[propName] = apply(data[propName], env[1])
 		}
 	} else if isArray {
 		data[propName] = append([]interface{}{}, env[1])
 	} else {
 		data[propName] = env[1]
 	}
+}
 
+func apply(cfgVal interface{}, envVal string) interface{} {
+	switch reflect.TypeOf(cfgVal).Kind() {
+	case reflect.String:
+		return envVal
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		val, err := strconv.ParseInt(envVal, 10, 64)
+		if err == nil {
+			return val
+		}
+	case reflect.Float32, reflect.Float64:
+		val, err := strconv.ParseFloat(envVal, 64)
+		if err == nil {
+			return val
+		}
+	case reflect.Bool:
+		val, err := strconv.ParseBool(envVal)
+		if err == nil {
+			return val
+		}
+	}
+	return cfgVal
 }
