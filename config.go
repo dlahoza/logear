@@ -2,32 +2,31 @@ package main
 
 import (
 	"github.com/BurntSushi/toml"
-	flag "github.com/docker/docker/pkg/mflag"
+	flag "github.com/getgauge/mflag"
 	"github.com/hashicorp/logutils"
 	"io/ioutil"
 	"log"
 	"os"
 	"runtime"
+	"strings"
+	"reflect"
+	"strconv"
 )
 
 var (
-	cfg       map[string]interface{}
+	cfg config
 	logFilter *logutils.LevelFilter
 	logLevels = []logutils.LogLevel{"DEBUG", "INFO", "WARN", "ERROR"}
 )
 
 const (
 	logMinLevel = logutils.LogLevel("INFO")
+	envDelimiter = "_"
 )
 
-func parseTomlFile(filename string) {
-	if data, err := ioutil.ReadFile(filename); err != nil {
-		log.Fatal("[ERROR] Can't read config file ", filename, ", error: ", err)
-	} else {
-		if _, err := toml.Decode(string(data), &cfg); err != nil {
-			log.Fatal("[ERROR] Can't parse config file ", filename, ", error: ", err)
-		}
-	}
+type config struct {
+	sectionName	string
+	data		map[string]interface{}
 }
 
 func readConfig() {
@@ -56,7 +55,120 @@ func readConfig() {
 		println("Architecture: " + runtime.GOARCH)
 		os.Exit(0)
 	}
-	parseTomlFile(configFile)
+	cfg.parseTomlFile(configFile)
 	startLogging()
 	log.Printf("%s started with pid %d", versionstring, os.Getpid())
+}
+
+func (c *config) parseTomlFile(filename string) {
+	if data, err := ioutil.ReadFile(filename); err != nil {
+		log.Fatal("[ERROR] Can't read config file ", filename, ", error: ", err)
+	} else {
+		if _, err := toml.Decode(string(data), &c.data); err != nil {
+			log.Fatal("[ERROR] Can't parse config file ", filename, ", error: ", err)
+		}
+	}
+}
+
+func (c *config) getSection(name string) (interface{}, bool) {
+	data, ok := c.data[name];
+	if !ok {
+		log.Printf("[WARNING] Don't found section named: %s", name)
+		return nil, false
+	}
+	data = overrideByEnv(data, strings.ToLower(progname + envDelimiter + name))
+
+	return data, true
+}
+
+func overrideByEnv(originalData interface{}, sectionName string) interface{} {
+	for _, env := range os.Environ() {
+		if strings.HasPrefix(env, sectionName) {
+			envNameValue := strings.SplitN(env, "=", 2)
+			envNameValue[0] = strings.TrimPrefix(envNameValue[0], sectionName + envDelimiter)
+
+			switch reflect.TypeOf(originalData).Kind()  {
+			case reflect.Map:
+				data := originalData.(map[string]interface{})
+				applyProcess(envNameValue, data)
+				originalData = data
+			case reflect.Slice:
+				data := originalData.([]map[string]interface{})
+				items := strings.SplitN(envNameValue[0], envDelimiter, 2)
+				if index, err := strconv.Atoi(items[0]); err == nil {
+					envNameValue[0] = items[1]
+					lastIndex := len(data) - 1
+					if index > lastIndex {
+						newData := make(map[string]interface{})
+						applyProcess(envNameValue, newData)
+						data = append(data, newData)
+					} else {
+						applyProcess(envNameValue, data[index])
+					}
+				}
+				originalData = data
+			}
+		}
+	}
+	return originalData
+}
+
+func applyProcess(env []string, data map[string]interface{}) {
+	var propName string
+	var index int
+	var isArray bool = false
+
+	items := strings.Split(env[0], envDelimiter)
+	if len(items) > 1 {
+		if i, err := strconv.Atoi(items[len(items)-1]); err == nil {
+			propName = strings.Join(items[:len(items)-1], envDelimiter)
+			index = i
+			isArray = true
+		} else {
+			propName = env[0]
+		}
+	} else {
+		propName = env[0]
+	}
+
+	if _, ok := data[propName]; ok {
+		switch reflect.TypeOf(data[propName]).Kind() {
+		case reflect.Slice, reflect.Array:
+			lastIndex := len(data[propName].([]interface{})) - 1
+			if index > lastIndex {
+				data[propName] = append(data[propName].([]interface{}), env[1])
+			} else {
+				data[propName].([]interface{})[index] = apply(data[propName].([]interface{})[index], env[1])
+			}
+		default:
+			data[propName] = apply(data[propName], env[1])
+		}
+	} else if isArray {
+		data[propName] = append([]interface{}{}, env[1])
+	} else {
+		data[propName] = env[1]
+	}
+}
+
+func apply(cfgVal interface{}, envVal string) interface{} {
+	switch reflect.TypeOf(cfgVal).Kind() {
+	case reflect.String:
+		return envVal
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		val, err := strconv.ParseInt(envVal, 10, 64)
+		if err == nil {
+			return val
+		}
+	case reflect.Float32, reflect.Float64:
+		val, err := strconv.ParseFloat(envVal, 64)
+		if err == nil {
+			return val
+		}
+	case reflect.Bool:
+		val, err := strconv.ParseBool(envVal)
+		if err == nil {
+			return val
+		}
+	}
+	return cfgVal
 }
